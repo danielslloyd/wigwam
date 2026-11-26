@@ -233,6 +233,23 @@ function renderPlayer(p, vid) {
   });
 }
 
+// ---------------------------------------------------------------- staying up to date
+
+// A tablet app can stay open for days, so re-check the catalog whenever the app
+// comes back on screen (at most once a minute). A video that's playing is left alone;
+// the new list shows up as soon as the kid goes back.
+let lastLoad = Date.now();
+async function refreshCatalog() {
+  if (!catalog || Date.now() - lastLoad < 60_000) return;
+  lastLoad = Date.now();
+  try {
+    const fresh = await loadCatalog();
+    if (fresh.generatedAt === catalog.generatedAt) return;
+    catalog = fresh;
+    if (parseHash().parts[2] !== 'v') render();
+  } catch { /* offline: keep what we have */ }
+}
+
 // ---------------------------------------------------------------- boot
 
 (async function boot() {
@@ -244,6 +261,8 @@ function renderPlayer(p, vid) {
   }
   initSpatialNav(app, { onBack: goBack });
   window.tellyboxBack = goBack; // the Android app's Back button calls this
+  window.tellyboxResume = refreshCatalog; // the Android app calls this when it comes back on screen
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshCatalog(); });
   window.addEventListener('hashchange', render);
   if (!location.hash && catalog.profiles.length === 1) replace(`#/p/${enc(catalog.profiles[0].id)}`);
   render();

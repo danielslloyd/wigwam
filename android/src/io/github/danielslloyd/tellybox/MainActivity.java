@@ -153,7 +153,12 @@ public class MainActivity extends Activity {
     protected void onPause() { web.onPause(); super.onPause(); }
 
     @Override
-    protected void onResume() { super.onResume(); web.onResume(); }
+    protected void onResume() {
+        super.onResume();
+        web.onResume();
+        // Pick up whitelist changes made while the app sat in the background.
+        web.evaluateJavascript("window.tellyboxResume && window.tellyboxResume()", null);
+    }
 
     @Override
     protected void onDestroy() { web.destroy(); super.onDestroy(); }
