@@ -1,13 +1,15 @@
 // Kid-facing app: pick a profile → pick a channel / collection → pick a video.
-// Everything shown comes from data/catalog.json, so only approved videos exist here.
+// Everything shown comes from data/kids/<kid>.json (written by the build from the
+// whitelist), so only approved videos exist here.
 
-import { loadCatalog, thumbUrl, fmtDuration, esc } from './shared.js';
+import { loadKidsIndex, loadKid, thumbUrl, fmtDuration, esc } from './shared.js';
 import { initSpatialNav } from './nav.js';
 import { mountPlayer } from './player.js';
 
 const PAGE_SIZE = 24;
 const app = document.getElementById('app');
-let catalog = null;
+let index = null;   // data/kids/index.json: the kids, and the current version of each kid's file
+let catalog = null; // the open kid's data/kids/<kid>.json
 let teardown = null;
 
 // ---------------------------------------------------------------- storage
@@ -22,7 +24,7 @@ function markWatched(pid, vid) { const w = watched(pid); w.add(vid); store.set(`
 
 // ---------------------------------------------------------------- data access
 
-const profile = (pid) => catalog.profiles.find((p) => p.id === pid);
+const profile = (pid) => index.profiles.find((p) => p.id === pid);
 
 /** Everything a profile is allowed to see, as browseable "sources". */
 function sources(pid) {
@@ -75,6 +77,7 @@ function render() {
     const pid = parts[1];
     const p = profile(pid);
     if (!p) return replace('#/');
+    if (catalog?.profiles[0].id !== pid) return openKid(pid);
     store.set('lastProfile', pid);
     document.documentElement.style.setProperty('--accent', p.color || '#f97316');
     if (!parts[2]) return renderHome(p);
@@ -99,7 +102,7 @@ function renderProfiles() {
     <section class="screen center">
       <h1 class="hello">Who's watching?</h1>
       <div class="profiles">
-        ${catalog.profiles.map((p) => `
+        ${index.profiles.map((p) => `
           <a class="profile" href="#/p/${enc(p.id)}" style="--c:${esc(p.color || '#f97316')}" ${p.id === last ? 'data-autofocus' : ''}>
             <span class="emoji">${esc(p.emoji || '🙂')}</span>
             <span class="pname">${esc(p.name)}</span>
@@ -233,19 +236,36 @@ function renderPlayer(p, vid) {
   });
 }
 
+/** Load a kid's videos (a spinner shows meanwhile), then draw the screen asked for. */
+async function openKid(pid) {
+  app.innerHTML = '<section class="screen center"><div class="spinner"></div></section>';
+  try {
+    catalog = await loadKid(pid, index.versions[pid]);
+  } catch (e) {
+    app.innerHTML = `<section class="screen center"><p class="empty">😕 ${esc(e.message)}</p><button class="cbtn primary" onclick="location.reload()">Try again</button></section>`;
+    return;
+  }
+  if (parseHash().parts[1] === pid) render();
+}
+
 // ---------------------------------------------------------------- staying up to date
 
-// A tablet app can stay open for days, so re-check the catalog whenever the app
-// comes back on screen (at most once a minute). A video that's playing is left alone;
-// the new list shows up as soon as the kid goes back.
+// A tablet app can stay open for days, so whenever it comes back on screen (at most
+// once a minute) fetch the tiny index and reload the open kid's videos only if that
+// kid's version changed. A video that's playing is left alone; the new list shows
+// up as soon as the kid goes back.
 let lastLoad = Date.now();
 async function refreshCatalog() {
-  if (!catalog || Date.now() - lastLoad < 60_000) return;
+  if (!index || Date.now() - lastLoad < 60_000) return;
   lastLoad = Date.now();
   try {
-    const fresh = await loadCatalog();
-    if (fresh.generatedAt === catalog.generatedAt) return;
-    catalog = fresh;
+    const fresh = await loadKidsIndex();
+    const pid = catalog?.profiles[0].id;
+    const kidChanged = !!pid && fresh.versions[pid] !== catalog.version;
+    const kidsChanged = JSON.stringify(fresh.profiles) !== JSON.stringify(index.profiles);
+    if (!kidChanged && !kidsChanged) return;
+    index = fresh;
+    if (kidChanged) catalog = fresh.versions[pid] ? await loadKid(pid, fresh.versions[pid]) : null;
     if (parseHash().parts[2] !== 'v') render();
   } catch { /* offline: keep what we have */ }
 }
@@ -254,7 +274,7 @@ async function refreshCatalog() {
 
 (async function boot() {
   try {
-    catalog = await loadCatalog();
+    index = await loadKidsIndex();
   } catch (e) {
     app.innerHTML = `<section class="screen center"><p class="empty">😕 ${esc(e.message)}</p><button class="cbtn primary" onclick="location.reload()">Try again</button></section>`;
     return;
@@ -264,7 +284,7 @@ async function refreshCatalog() {
   window.tellyboxResume = refreshCatalog; // the Android app calls this when it comes back on screen
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshCatalog(); });
   window.addEventListener('hashchange', render);
-  if (!location.hash && catalog.profiles.length === 1) replace(`#/p/${enc(catalog.profiles[0].id)}`);
+  if (!location.hash && index.profiles.length === 1) replace(`#/p/${enc(index.profiles[0].id)}`);
   render();
 })();
 

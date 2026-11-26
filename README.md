@@ -101,6 +101,7 @@ On `localhost` the admin page works without a token: it edits a local copy, and 
 | `admin.html`, `admin.js` | Grown-ups' page; saves to GitHub through the Contents API |
 | `data/whitelist.json` | Source of truth: settings (Shorts, blocked words, exceptions), profiles, channels, playlists, videos, hidden videos |
 | `data/catalog.json` | Generated; don't edit. Hidden videos stay in the lists but are marked in `hidden`, so un-hiding one is instant |
+| `data/kids/` | Generated; one small file per kid with just their videos, plus `index.json`, which the kids' app checks to see whether anything changed |
 | `data/tags.json` | Generated; YouTube tags used for blocked-word matching (API mode) |
 | `shared.js` | Helpers, plus the blocked-word matcher and starter list (`SUGGESTED_TERMS`) |
 | `scripts/build-catalog.mjs` | Builds the catalog: YouTube Data API with a key, RSS feeds without one |

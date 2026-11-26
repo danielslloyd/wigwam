@@ -16,7 +16,8 @@
 // Blocked words (settings.blockedTerms) are checked against each video's title
 // (and tags, in API mode). Matching videos are marked in catalog.hidden.
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, unlink } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { termMatcher } from '../shared.js';
@@ -363,5 +364,41 @@ const wlOut = JSON.stringify(whitelist, null, 2) + '\n';
 if (wlOut !== (await readFile(WHITELIST, 'utf8'))) await writeFile(WHITELIST, wlOut);
 await writeFile(CATALOG, JSON.stringify(catalog) + '\n');
 await writeFile(TAGS, JSON.stringify(tags) + '\n');
+
+// --- small files for the kids' app
+// catalog.json holds everything (the grown-ups page needs it), but a kid only needs
+// their own channels and visible videos. kids/index.json is tiny and says which
+// version of each kid's file is current, so the app only downloads a kid's file
+// again when something in it actually changed.
+const KIDS = path.join(ROOT, 'data', 'kids');
+await mkdir(KIDS, { recursive: true });
+const kidsIndex = { generatedAt: catalog.generatedAt, profiles: whitelist.profiles, versions: {} };
+for (const p of whitelist.profiles) {
+  const bp = catalog.byProfile[p.id];
+  const visible = (ids) => ids.filter((id) => !catalog.hidden[id]);
+  const kid = { profiles: [p], byProfile: { [p.id]: bp }, channels: {}, playlists: {}, lists: {}, hidden: {}, videos: {} };
+  const addVideo = (id) => { const v = catalog.videos[id]; kid.videos[id] = { title: v.title, ...(v.durationSec && { durationSec: v.durationSec }) }; };
+  for (const id of bp.channels) {
+    const { title, thumb } = catalog.channels[id] || {};
+    kid.channels[id] = { title, thumb };
+    kid.lists['ch:' + id] = visible(catalog.lists['ch:' + id]);
+    kid.lists['ch:' + id].forEach(addVideo);
+  }
+  for (const id of bp.playlists) {
+    const { title, thumb } = catalog.playlists[id] || {};
+    kid.playlists[id] = { title, thumb };
+    kid.lists['pl:' + id] = visible(catalog.lists['pl:' + id]);
+    kid.lists['pl:' + id].forEach(addVideo);
+  }
+  bp.videos.forEach(addVideo);
+  const json = JSON.stringify(kid);
+  const version = createHash('sha1').update(json).digest('hex').slice(0, 12);
+  kidsIndex.versions[p.id] = version;
+  await writeFile(path.join(KIDS, `${p.id}.json`), JSON.stringify({ version, ...kid }) + '\n');
+}
+for (const f of await readdir(KIDS)) { // remove files for kids who no longer exist
+  if (f !== 'index.json' && !whitelist.profiles.some((p) => `${p.id}.json` === f)) await unlink(path.join(KIDS, f));
+}
+await writeFile(path.join(KIDS, 'index.json'), JSON.stringify(kidsIndex) + '\n');
 
 console.log(`Done: ${total} videos, ${Object.keys(catalog.channels).length} channels, ${apiCalls} requests, ${warnings.length} warnings.`);

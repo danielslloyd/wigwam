@@ -1,8 +1,17 @@
 // Small helpers shared by the kid app and the admin page.
 
-export async function loadCatalog() {
+/** The kids and the current version of each kid's video list. Tiny, so always fetched fresh. */
+export async function loadKidsIndex() {
   // GitHub Pages caches files for ~10 minutes; the query string skips that.
-  const res = await fetch(`data/catalog.json?t=${Date.now()}`, { cache: 'no-store' });
+  const res = await fetch(`data/kids/index.json?t=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Couldn't load the video list (HTTP ${res.status})`);
+  return res.json();
+}
+
+/** One kid's channels and videos. The version in the URL changes only when the
+ *  content does, so the browser can reuse its copy until then. */
+export async function loadKid(pid, version) {
+  const res = await fetch(`data/kids/${encodeURIComponent(pid)}.json?v=${encodeURIComponent(version)}`);
   if (!res.ok) throw new Error(`Couldn't load the video list (HTTP ${res.status})`);
   return res.json();
 }
