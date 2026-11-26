@@ -690,33 +690,43 @@
       "profiles": [
         "piggle"
       ],
-      "shorts": true
+      "shorts": true,
+      "id": "UCc4h_ZkorGvUWuU1byM-lgA",
+      "title": "my mechanics clips"
     },
     {
       "handle": "@BrilliantClassics",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UC9B6J4qn5M_TLMh7zX0ISBA",
+      "title": "Brilliant Classics"
     },
     {
       "handle": "@MinnoKids",
       "profiles": [
         "piggle",
         "potamus"
-      ]
+      ],
+      "id": "UC_oVYDT613F6viE3JENV-Yg",
+      "title": "Minno - Bible Stories for Kids"
     },
     {
       "handle": "@AmericasTestKitchen",
       "profiles": [
         "piggle",
         "potamus"
-      ]
+      ],
+      "id": "UCxAS_aK7sS2x_bqnlJHDSHw",
+      "title": "America's Test Kitchen"
     },
     {
       "handle": "@How2DrawAnimals",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UCOlX9Ymfc5wKEJR69jSRE1A",
+      "title": "How2DrawAnimals"
     }
   ],
   "playlists": [
