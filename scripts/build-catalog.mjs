@@ -193,6 +193,13 @@ const want = (id, info = null) => { if (!skipped.has(id) && !prevVideos[id]) pen
 // --- channels
 for (const entry of whitelist.channels) {
   const label = entry.handle || entry.id || entry.username || entry.url;
+  // A channel no kid has been given yet: look up its name and picture once (for the
+  // grown-ups page), but don't fetch its videos, so the kids' catalog stays small.
+  const unassigned = !(entry.profiles || []).length;
+  if (unassigned && entry.id && prev.channels?.[entry.id]) {
+    catalog.channels[entry.id] = prev.channels[entry.id];
+    continue;
+  }
   try {
     const ch = MODE === 'api' ? await apiResolveChannel(entry) : await scrapeChannel(channelPageUrl(entry));
     entry.id = ch.id;
@@ -200,6 +207,7 @@ for (const entry of whitelist.channels) {
     // Shorts: per-channel "shorts": true/false overrides settings.allowShorts
     const shorts = typeof entry.shorts === 'boolean' ? entry.shorts : allowShortsDefault;
     catalog.channels[ch.id] = { id: ch.id, title: ch.title, thumb: ch.thumb, handle: entry.handle || null, shorts };
+    if (unassigned) { console.log(`  · channel ${ch.title} (no kids yet: videos not fetched)`); continue; }
 
     const key = 'ch:' + ch.id;
     // If the Shorts setting changed since last time, start this channel's list afresh.
