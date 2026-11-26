@@ -18,7 +18,8 @@ const cfg = {
   owner: localStorage.getItem(LS + 'owner') || '',
   repo: localStorage.getItem(LS + 'repo') || '',
 };
-if (!cfg.owner && location.hostname.endsWith('.github.io')) {
+// On GitHub Pages the address says which repo this is, so a renamed repo just works.
+if (location.hostname.endsWith('.github.io')) {
   cfg.owner = location.hostname.split('.')[0];
   cfg.repo = location.pathname.split('/').filter(Boolean)[0] || `${cfg.owner}.github.io`;
   if (cfg.repo.endsWith('.html')) cfg.repo = `${cfg.owner}.github.io`;
@@ -33,7 +34,8 @@ const state = {
   log: [],             // human-readable list of unpublished changes
   filter: 'all',       // which kid's view the lists show
   editingKid: null,
-  expanded: new Map(), // channel/playlist key → how many videos to show
+  expanded: new Map(), // open "show more" sections → how many to show
+  browse: null,        // the channel/playlist open in the video browser
   preview: null,       // current "add" preview
   addKids: null,       // kids ticked in the add card
   titles: new Map(),   // videoId → title (for hidden videos)
@@ -255,6 +257,7 @@ function renderAll() {
   renderAddKids();
   renderPreview();
   renderLists();
+  renderBrowser();
   renderPublishBar();
 }
 
@@ -270,7 +273,7 @@ function renderStatus() {
   el('disconnect').hidden = state.mode !== 'github';
 
   const notes = [];
-  if (c?.mode === 'rss') notes.push(`<b>Free mode:</b> without a YouTube API key, Tellybox only sees each channel's newest ~15 videos, though the list grows over time. Add a key to get every video (see the README).`);
+  if (c?.mode === 'rss') notes.push(`<b>Free mode:</b> without a YouTube API key, Wigwam only sees each channel's newest ~15 videos, though the list grows over time. Add a key to get every video (see the README).`);
   if (c?.warnings?.length) notes.push(`<b>Last update had ${c.warnings.length} problem${c.warnings.length > 1 ? 's' : ''}:</b><ul>${c.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`);
   el('notes').innerHTML = notes.map((n) => `<div class="note">${n}</div>`).join('');
 }
@@ -474,7 +477,7 @@ async function onAddInput() {
       options.find((x) => x.type === 'block').sub = o.title;
     } catch (err) {
       if (seq !== previewSeq) return;
-      options[0].title = err.message === 'embedding-disabled' ? "This video can't be played outside YouTube, so it won't work in Tellybox." : "Couldn't find that video. It may be private or deleted.";
+      options[0].title = err.message === 'embedding-disabled' ? "This video can't be played outside YouTube, so it won't work in Wigwam." : "Couldn't find that video. It may be private or deleted.";
       options[0].bad = true;
     }
     renderPreview();
@@ -614,16 +617,8 @@ function videoAction(t) {
   else { state.wl.blocked.push(id); state.titles.set(id, title); change(`hide ${title}`); }
 }
 
-function videoStrip(key, ids) {
-  const shown = state.expanded.get(key) || 0;
-  if (!shown) return '';
-  return `<div class="strip">
-    ${ids.slice(0, shown).map(miniCard).join('')}
-    ${ids.length > shown ? `<button type="button" class="btn more" data-more="${esc(key)}">Show more (${ids.length - shown} left)</button>` : ''}
-  </div>`;
-}
-
-const countLabel = (ids) => {
+const countLabel = (ids, entry) => {
+  if (!ids.length && !(entry.profiles || []).length) return 'Videos load once a kid has it';
   const hidden = ids.filter(hiddenReason).length;
   return `${ids.length - hidden} videos${hidden ? ` · ${hidden} hidden` : ''}`;
 };
@@ -639,20 +634,21 @@ function renderLists() {
     const key = 'ch:' + (c.id || i);
     return `<div class="item">
       <div class="item-main">
-        ${info?.thumb ? `<img class="avatar" src="${esc(info.thumb)}" alt="" referrerpolicy="no-referrer">` : `<div class="avatar">${esc(channelLabel(c).replace(/^@/, '')[0]?.toUpperCase() || '?')}</div>`}
+        <button type="button" class="item-open" data-open="${esc(key)}" title="See this channel's videos">
+          ${info?.thumb ? `<img class="avatar" src="${esc(info.thumb)}" alt="" referrerpolicy="no-referrer">` : `<div class="avatar">${esc(channelLabel(c).replace(/^@/, '')[0]?.toUpperCase() || '?')}</div>`}
+        </button>
         <div class="item-text">
-          <div class="item-title">${esc(info?.title || channelLabel(c))}</div>
-          <div class="muted">${info ? countLabel(ids) : 'New: videos appear a minute after you publish'}${(c.profiles || []).length ? '' : ' · <b class="warn">no kids selected</b>'}</div>
+          <button type="button" class="item-title item-open" data-open="${esc(key)}">${esc(info?.title || channelLabel(c))}</button>
+          <div class="muted">${info ? countLabel(ids, c) :'New: videos appear a minute after you publish'}${(c.profiles || []).length ? '' : ' · <b class="warn">no kids selected</b>'}</div>
         </div>
         <div class="item-kids">${entryKids('channels', i, c)}</div>
         <div class="item-btns">
           <button type="button" class="btn small shorts ${shortsFor(c) ? 'on' : ''}" data-shorts="${i}"
             title="${shortsFor(c) ? 'Shorts from this channel are included' : 'Shorts from this channel are left out'}${typeof c.shorts === 'boolean' ? ' (just for this channel)' : ' (your default)'}">Shorts ${shortsFor(c) ? '✓' : '✕'}</button>
-          ${ids.length ? `<button type="button" class="btn small" data-expand="${esc(key)}">${state.expanded.get(key) ? 'Close' : 'Videos'}</button>` : ''}
+          <button type="button" class="btn small" data-open="${esc(key)}">Videos</button>
           <button type="button" class="btn small danger" data-remove="channels:${i}" aria-label="Remove">✕</button>
         </div>
       </div>
-      ${videoStrip(key, ids)}
     </div>`;
   }).join('') : `<p class="muted empty">No channels${state.filter === 'all' ? ' yet' : ' for this kid'}.</p>`;
 
@@ -664,18 +660,19 @@ function renderLists() {
     const key = 'pl:' + p.id;
     return `<div class="item">
       <div class="item-main">
-        ${info?.thumb ? `<img class="avatar wide" src="${esc(info.thumb)}" alt="">` : '<div class="avatar wide">▤</div>'}
+        <button type="button" class="item-open" data-open="${esc(key)}" title="See this playlist's videos">
+          ${info?.thumb ? `<img class="avatar wide" src="${esc(info.thumb)}" alt="">` : '<div class="avatar wide">▤</div>'}
+        </button>
         <div class="item-text">
-          <div class="item-title">${esc(info?.title || p.title || p.id)}</div>
-          <div class="muted">${info ? `${countLabel(ids)}${info.channelTitle ? ' · ' + esc(info.channelTitle) : ''}` : 'New: videos appear a minute after you publish'}</div>
+          <button type="button" class="item-title item-open" data-open="${esc(key)}">${esc(info?.title || p.title || p.id)}</button>
+          <div class="muted">${info ? `${countLabel(ids, p)}${info.channelTitle ? ' · ' + esc(info.channelTitle) : ''}` : 'New: videos appear a minute after you publish'}</div>
         </div>
         <div class="item-kids">${entryKids('playlists', i, p)}</div>
         <div class="item-btns">
-          ${ids.length ? `<button type="button" class="btn small" data-expand="${esc(key)}">${state.expanded.get(key) ? 'Close' : 'Videos'}</button>` : ''}
+          <button type="button" class="btn small" data-open="${esc(key)}">Videos</button>
           <button type="button" class="btn small danger" data-remove="playlists:${i}" aria-label="Remove">✕</button>
         </div>
       </div>
-      ${videoStrip(key, ids)}
     </div>`;
   }).join('') || '<p class="muted empty">None for this kid.</p>';
 
@@ -727,17 +724,147 @@ el('lists').addEventListener('click', (e) => {
     state.wl[kind].splice(+idx, 1);
     return change(`remove ${name}`);
   }
-  if (t.dataset.expand) {
-    const k = t.dataset.expand;
-    state.expanded.get(k) ? state.expanded.delete(k) : state.expanded.set(k, 24);
-    return renderLists();
-  }
-  if (t.dataset.more) { state.expanded.set(t.dataset.more, state.expanded.get(t.dataset.more) + 48); return renderLists(); }
+  if (t.dataset.open) return openBrowser(t.dataset.open);
   if (t.dataset.shorts) {
     const c = state.wl.channels[+t.dataset.shorts];
     const next = !shortsFor(c);
     if (next === state.wl.settings.allowShorts) delete c.shorts; else c.shorts = next;
     return change(`${next ? 'include' : 'leave out'} Shorts from ${channelLabel(c)}`);
+  }
+  videoAction(t);
+});
+
+// ---------------------------------------------------------------- video browser
+//
+// Opens one channel or playlist and lists every video in it, so you can hide or
+// unhide them one at a time (tap the picture) or all at once after a search.
+
+const PAGE = 60;
+const fold = (s) => String(s ?? '').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();
+
+function openBrowser(key) {
+  state.browse = { key, q: '', tab: 'all', page: 0 };
+  el('br-search').value = '';
+  el('browser').show();
+  document.body.classList.add('browsing');
+  renderBrowser();
+  el('br-body').scrollTop = 0;
+}
+
+function closeBrowser() {
+  if (!state.browse) return;
+  state.browse = null;
+  el('browser').close();
+  document.body.classList.remove('browsing');
+}
+
+/** What's open: { entry, title, thumb, round, ids, what, sub } */
+function browsed() {
+  const { key } = state.browse;
+  const { wl, catalog } = state;
+  const ids = catalog?.lists?.[key] || [];
+  const kind = key.slice(0, 2), id = key.slice(3);
+  if (kind === 'ch') {
+    const c = wl.channels.find((x) => x.id === id) || (/^\d+$/.test(id) ? wl.channels[+id] : null);
+    const info = catalog?.channels?.[id];
+    return { entry: c, title: info?.title || (c ? channelLabel(c) : id), thumb: info?.thumb, round: true, ids, what: 'channel' };
+  }
+  const p = wl.playlists.find((x) => x.id === id);
+  const info = catalog?.playlists?.[id];
+  return { entry: p, title: info?.title || p?.title || id, thumb: info?.thumb, round: false, ids, what: 'playlist', sub: info?.channelTitle };
+}
+
+const matching = (ids, q) => (q ? ids.filter((id) => fold(state.catalog.videos[id]?.title).includes(q)) : ids);
+
+function browserCard(id) {
+  const v = state.catalog?.videos?.[id];
+  const reason = hiddenReason(id);
+  const byWord = reason && reason !== 'blocked';
+  const action = byWord ? `data-allow="${esc(id)}"` : `data-hide="${esc(id)}"`;
+  const note = reason === 'blocked' ? 'Hidden by you' : byWord ? `Blocked word “${esc(reason.slice(5))}”` : esc([fmtDuration(v?.durationSec), timeAgo(v?.publishedAt)].filter(Boolean).join(' · '));
+  const tip = reason === 'blocked' ? 'Tap to show it again' : byWord ? 'Tap to allow it anyway' : 'Tap to hide it';
+  return `
+    <div class="bcard ${reason ? 'off' : ''}">
+      <button type="button" class="bthumb" ${action} aria-pressed="${!!reason}" title="${tip}">
+        <img src="${thumbUrl(id)}" alt="" loading="lazy">
+        <span class="bbadge">${reason ? '🚫 Hidden' : ''}</span>
+      </button>
+      <div class="mini-title">${esc(v?.title || id)}</div>
+      <div class="mini-foot">
+        <span class="muted">${note}</span>
+        <a class="link" href="https://www.youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener" title="Watch on YouTube">Watch ↗</a>
+      </div>
+    </div>`;
+}
+
+function renderBrowser() {
+  const b = state.browse;
+  if (!b) return;
+  const info = browsed();
+  if (!info.entry) return closeBrowser(); // removed meanwhile
+  const hiddenCount = info.ids.filter(hiddenReason).length;
+  el('br-avatar').innerHTML = info.thumb ? `<img class="avatar ${info.round ? '' : 'wide'}" src="${esc(info.thumb)}" alt="" referrerpolicy="no-referrer">` : '';
+  el('br-title').textContent = info.title;
+  el('br-count').textContent = info.ids.length ? `${info.ids.length - hiddenCount} showing · ${hiddenCount} hidden${info.sub ? ' · ' + info.sub : ''}` : '';
+
+  if (!info.ids.length) {
+    el('br-tools').hidden = true; el('br-pager').innerHTML = ''; el('br-bulk').innerHTML = '';
+    el('br-grid').innerHTML = `<p class="muted empty">${(info.entry.profiles || []).length
+      ? 'No videos yet. They appear about a minute after you publish.'
+      : `Wigwam only fetches the videos of a ${info.what} once a kid can watch it. Tick a kid for it and publish, then come back here to hide videos.`}</p>`;
+    return;
+  }
+  el('br-tools').hidden = false;
+
+  const q = fold(b.q.trim());
+  const matches = matching(info.ids, q);
+  const byTab = { all: matches, shown: matches.filter((id) => !hiddenReason(id)), hidden: matches.filter(hiddenReason) };
+  const list = byTab[b.tab];
+  el('br-tabs').innerHTML = [['all', 'All'], ['shown', 'Showing'], ['hidden', 'Hidden']]
+    .map(([k, name]) => `<button type="button" class="tab ${b.tab === k ? 'on' : ''}" data-tab="${k}">${name} <span class="n">${byTab[k].length}</span></button>`).join('');
+
+  // After a search, hide or unhide everything that matched in one go.
+  const canHide = byTab.shown.length, canShow = matches.filter((id) => state.wl.blocked.includes(id)).length;
+  el('br-bulk').innerHTML = q && (canHide || canShow) ? `<div class="br-bulk">
+      <span class="muted">${matches.length} match “${esc(b.q.trim())}”</span>
+      ${canHide ? `<button type="button" class="btn small" data-bulk="hide">Hide ${canHide === 1 ? 'it' : `all ${canHide}`}</button>` : ''}
+      ${canShow ? `<button type="button" class="btn small" data-bulk="show">Unhide ${canShow === 1 ? 'it' : `all ${canShow}`}</button>` : ''}
+    </div>` : '';
+
+  const pages = Math.max(1, Math.ceil(list.length / PAGE));
+  b.page = Math.min(b.page, pages - 1);
+  el('br-grid').innerHTML = list.length
+    ? list.slice(b.page * PAGE, (b.page + 1) * PAGE).map(browserCard).join('')
+    : `<p class="muted empty">${b.tab === 'hidden' ? 'Nothing hidden here.' : 'No videos match.'}</p>`;
+  el('br-pager').innerHTML = pages > 1 ? `
+    <button type="button" class="btn small" data-page="${b.page - 1}" ${b.page ? '' : 'disabled'}>◀ Newer</button>
+    <span class="muted">Page ${b.page + 1} of ${pages}</span>
+    <button type="button" class="btn small" data-page="${b.page + 1}" ${b.page < pages - 1 ? '' : 'disabled'}>Older ▶</button>` : '';
+}
+
+el('br-search').addEventListener('input', (e) => { state.browse.q = e.target.value; state.browse.page = 0; renderBrowser(); });
+el('br-close').addEventListener('click', closeBrowser);
+el('br-shade').addEventListener('click', closeBrowser);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.browse) { e.preventDefault(); closeBrowser(); } });
+el('browser').addEventListener('click', (e) => {
+  const t = e.target.closest('button');
+  if (!t || !state.browse) return;
+  const b = state.browse;
+  const top = () => { el('br-body').scrollTop = 0; };
+  if (t.dataset.tab) { b.tab = t.dataset.tab; b.page = 0; renderBrowser(); return top(); }
+  if (t.dataset.page) { b.page = +t.dataset.page; renderBrowser(); return top(); }
+  if (t.dataset.bulk) {
+    const info = browsed(), words = b.q.trim();
+    const matches = matching(info.ids, fold(words));
+    if (t.dataset.bulk === 'hide') {
+      const ids = matches.filter((id) => !hiddenReason(id));
+      for (const id of ids) state.titles.set(id, state.catalog.videos[id]?.title || id);
+      state.wl.blocked.push(...ids);
+      return change(`hide ${ids.length} video${ids.length > 1 ? 's' : ''} matching “${words}” in ${info.title}`);
+    }
+    const ids = new Set(matches.filter((id) => state.wl.blocked.includes(id)));
+    state.wl.blocked = state.wl.blocked.filter((id) => !ids.has(id));
+    return change(`unhide ${ids.size} video${ids.size > 1 ? 's' : ''} matching “${words}” in ${info.title}`);
   }
   videoAction(t);
 });

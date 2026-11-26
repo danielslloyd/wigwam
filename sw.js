@@ -4,7 +4,7 @@
 // Each file is stored once, under its path without the query string, so cache-busting
 // URLs (?t=…, ?v=…) replace the previous copy instead of piling up.
 
-const CACHE = 'tellybox-v2';
+const CACHE = 'wigwam-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil((async () => {

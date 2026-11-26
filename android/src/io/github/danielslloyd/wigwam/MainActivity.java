@@ -1,4 +1,4 @@
-package io.github.danielslloyd.tellybox;
+package io.github.danielslloyd.wigwam;
 
 import android.app.Activity;
 import android.net.Uri;
@@ -19,10 +19,10 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 /**
- * Tellybox for Android: a full-screen WebView locked to the Tellybox site.
+ * Wigwam for Android: a full-screen WebView locked to the Wigwam site.
  * - Only pages under SITE can load in the main window (no YouTube, no admin page, no other sites).
  * - No address bar, no pop-up windows, no downloads, no long-press menus.
- * - Back runs Tellybox's own Back; it never leaves the app.
+ * - Back runs Wigwam's own Back; it never leaves the app.
  */
 public class MainActivity extends Activity {
     static final String SITE = BuildConfig.SITE;
@@ -50,13 +50,13 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setSupportZoom(false);
-        s.setUserAgentString(s.getUserAgentString() + " TellyboxApp/1");
+        s.setUserAgentString(s.getUserAgentString() + " WigwamApp/1");
 
         web.setLongClickable(false);
         web.setOnLongClickListener(v -> true);
         web.setHapticFeedbackEnabled(false);
         web.setDownloadListener((url, ua, cd, mime, len) -> { /* no downloads */ });
-        web.addJavascriptInterface(new Bridge(), "TellyboxApp");
+        web.addJavascriptInterface(new Bridge(), "WigwamApp");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
         });
 
         web.setWebChromeClient(new WebChromeClient() {
-            // Lets Tellybox's own full-screen button work inside the app.
+            // Lets Wigwam's own full-screen button work inside the app.
             @Override
             public void onShowCustomView(View view, CustomViewCallback cb) {
                 if (customView != null) { cb.onCustomViewHidden(); return; }
@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
     private void showOffline() {
         String html = "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'>"
             + "<body style='margin:0;height:100vh;display:grid;place-items:center;background:#fff7ed;font:24px system-ui;color:#431407;text-align:center'>"
-            + "<div><div style='font-size:72px'>📺</div><p>Tellybox can't reach the internet.</p>"
+            + "<div><div style='font-size:72px'>🛖</div><p>Wigwam can't reach the internet.</p>"
             + "<button onclick=\"location.href='" + SITE + "'\" style='font:inherit;padding:16px 40px;border:0;border-radius:999px;background:#f97316;color:#fff'>Try again</button></div>";
         web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
     }
@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
         if (customView != null) { web.getWebChromeClient().onHideCustomView(); return; }
         String url = web.getUrl();
         if (url == null || !url.startsWith(SITE)) { web.loadUrl(SITE); return; }
-        web.evaluateJavascript("window.tellyboxBack && window.tellyboxBack()", null);
+        web.evaluateJavascript("window.wigwamBack && window.wigwamBack()", null);
     }
 
     private void hideSystemBars() {
@@ -157,7 +157,7 @@ public class MainActivity extends Activity {
         super.onResume();
         web.onResume();
         // Pick up whitelist changes made while the app sat in the background.
-        web.evaluateJavascript("window.tellyboxResume && window.tellyboxResume()", null);
+        web.evaluateJavascript("window.wigwamResume && window.wigwamResume()", null);
     }
 
     @Override

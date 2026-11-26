@@ -1,6 +1,6 @@
 // The video player: YouTube's own embed player with YouTube's own controls.
 //
-// Tellybox adds only three things around it:
+// Wigwam adds only three things around it:
 //  - a slim bar above the video with a Back button and the title;
 //  - a cover card whenever the video is paused or ends, which hides YouTube's
 //    "More videos" and end-screen suggestions (Keep watching / Watch again / Back);
@@ -63,7 +63,7 @@ export function mountPlayer(root, opts) {
   let ticker = 0, pauseTimer = 0, resumeTimer = 0, lastProgress = 0;
 
   // In the Android app: keep the screen awake only while a video is actually playing.
-  const keepAwake = (on) => { try { window.TellyboxApp?.setPlaying(on); } catch {} };
+  const keepAwake = (on) => { try { window.WigwamApp?.setPlaying(on); } catch {} };
 
   // ---- cover card
   function showCover(mode, msg = '') {

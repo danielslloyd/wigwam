@@ -1,4 +1,4 @@
-# Tellybox
+# Wigwam
 
 A YouTube player for kids that only plays videos a grown-up has approved.
 
@@ -20,25 +20,25 @@ index.html (kids)    admin.html (grown-ups)
 
 ## Setup (about 15 minutes)
 
-1. **Create a GitHub repo** (for example `tellybox`) and push this folder to its `main` branch.
+1. **Create a GitHub repo** (for example `wigwam`) and push this folder to its `main` branch.
    GitHub Pages on a free account needs a **public** repo, so your whitelist is visible to anyone who looks. Use nicknames for the kids, not real names.
 2. **Turn on Pages.** In the repo, go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
 3. **Run the first build.** Go to **Actions → Build catalog & deploy → Run workflow**. A minute later the site is live at `https://<you>.github.io/<repo>/`.
 4. **Connect the admin page.** Open `https://<you>.github.io/<repo>/admin.html` on *your* phone or computer and follow the steps on screen. You'll create a fine-grained GitHub token that can access only this repo, with **Contents: Read and write**. If you also grant **Actions: Read-only**, the page can show build progress. The token is stored only in that browser.
-5. **Recommended: add a YouTube API key.** Without one, Tellybox runs in *free mode* and sees only each channel's newest ~15 videos, though the list grows every night. With a key it gets every video, plus lengths, and skips videos that can't be embedded.
+5. **Recommended: add a YouTube API key.** Without one, Wigwam runs in *free mode* and sees only each channel's newest ~15 videos, though the list grows every night. With a key it gets every video, plus lengths, and skips videos that can't be embedded.
    1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable **YouTube Data API v3**.
    2. Go to **Credentials → Create credentials → API key**. Restricting it to the YouTube Data API v3 is a good idea.
    3. In the GitHub repo, go to **Settings → Secrets and variables → Actions → New repository secret** and add it with the name `YOUTUBE_API_KEY`. Then run the workflow again.
 
-   The free quota is 10,000 units a day, and Tellybox uses roughly 1 unit per 50 videos. Nightly updates cost a handful of units.
+   The free quota is 10,000 units a day, and Wigwam uses roughly 1 unit per 50 videos. Nightly updates cost a handful of units.
 
 ## Using it
 
 **Grown-ups (admin.html):**
-- Paste any YouTube link. Tellybox works out whether it's a video, channel or playlist. For a video link you can choose *just this video*, *the whole channel*, or *hide this video*.
+- Paste any YouTube link. Wigwam works out whether it's a video, channel or playlist. For a video link you can choose *just this video*, *the whole channel*, or *hide this video*.
 - Tap the kid chips to choose who gets it, then **Approve**.
 - Every item in the lists has per-kid toggles. Use *What Fox sees* to view everything one kid can watch.
-- On a channel, press **Videos** to browse what's in it and **Hide** anything you don't want.
+- Tap a channel or playlist (or its **Videos** button) to open it. Every video is there, newest first. Tap a picture to hide it, tap again to show it. Search the titles to find videos, and **Hide all** or **Unhide all** of the matches at once. **Watch ↗** previews a video on YouTube.
 - **Filters → YouTube Shorts** switches Shorts on or off for every channel. Each channel's **Shorts** button overrides that for just that channel. Playlists and single videos always show what you picked, even if it's a Short.
 - **Filters → Blocked words** hides any channel or playlist video whose title contains one of the words. In API mode, YouTube tags are checked too.
   - Matching is by whole word and ignores capitals and accents, so *kill* doesn't block *skill* or *Killer Whales*.
@@ -46,19 +46,19 @@ index.html (kids)    admin.html (grown-ups)
   - The page shows straight away which videos your words would hide. Use **Allow anyway** to make an exception for one of them.
   - Videos you approve one at a time are always shown; you'll get a heads-up if one matches a blocked word.
 - Changes collect in the bar at the bottom. Press **Publish** when you're done, and the kids' app updates about a minute later.
-- On a computer, drag the **＋ Tellybox** bookmarklet (under "Tip" on the admin page) to your bookmarks bar. Clicking it on any YouTube page opens the admin page with that link already filled in.
+- On a computer, drag the **＋ Wigwam** bookmarklet (under "Tip" on the admin page) to your bookmarks bar. Clicking it on any YouTube page opens the admin page with that link already filled in.
 
 **Kids (index.html):** pick your face, pick a channel, pick a video. When a video ends you get *Watch again* or *Back*, and nothing plays by itself. Watched videos get a ✓, and long videos resume where you left off.
 
 ## Locking down the device
 
-Tellybox shows only approved videos, but it can't stop a kid leaving the app and opening YouTube. The device has to do that:
+Wigwam shows only approved videos, but it can't stop a kid leaving the app and opening YouTube. The device has to do that:
 
 - **iPad / iPhone:**
   1. In Safari, open the site, tap **Share → Add to Home Screen**, and use that icon from then on.
-  2. Turn on **Settings → Accessibility → Guided Access**. Open Tellybox and triple-click the side or home button to lock the iPad into it.
+  2. Turn on **Settings → Accessibility → Guided Access**. Open Wigwam and triple-click the side or home button to lock the iPad into it.
   3. Use **Screen Time → Content & Privacy → Allowed Apps** to hide the YouTube app and other browsers.
-- **Android tablet:** install the Tellybox app (below), then use **App pinning** or a Family Link profile to keep kids in it.
+- **Android tablet:** install the Wigwam app (below), then use **App pinning** or a Family Link profile to keep kids in it.
 - **Laptop / Chromebook:** run Chrome in kiosk mode (`chrome --kiosk https://<you>.github.io/<repo>/`), or use a supervised profile with a site allowlist.
 - **TV:** open the site in the TV's browser (Fire TV Silk, Google TV, or a smart-TV browser) and use the remote's arrow keys. A laptop on HDMI also works. **Don't cast to the YouTube TV app**, because that brings back autoplay and recommendations.
 
@@ -66,7 +66,7 @@ Before relying on a content filter that blocks `youtube.com`, test that videos s
 
 ## Android app
 
-`android/` holds a small Android app that opens the site full screen with no address bar. It only loads Tellybox's own pages: links to YouTube or anywhere else are ignored, and the grown-ups page is blocked inside it. The tablet's Back button acts as Tellybox's Back, and the screen stays awake while a video plays. It isn't in any app store; you install it over USB.
+`android/` holds a small Android app that opens the site full screen with no address bar. It only loads Wigwam's own pages: links to YouTube or anywhere else are ignored, and the grown-ups page is blocked inside it. The tablet's Back button acts as Wigwam's Back, and the screen stays awake while a video plays. It isn't in any app store; you install it over USB.
 
 1. Install a JDK 17+ and the Android SDK (Android Studio installs both). On the tablet, turn on **Developer options → USB debugging** and plug it in.
 2. Run `bash android/build.sh --install` (Git Bash on Windows). To point it at a different site, pass the URL: `bash android/build.sh https://you.github.io/repo/ --install`.
@@ -74,7 +74,7 @@ Before relying on a content filter that blocks `youtube.com`, test that videos s
 ## How the player works
 
 - Videos play in YouTube's own embed player, with YouTube's own controls, on the privacy-enhanced `youtube-nocookie.com` host (`rel=0`, `iv_load_policy=3`, `fs=0`).
-- When a video is paused or ends, a Tellybox card covers YouTube's "More videos" and end-screen suggestions. Kids get *Keep watching*, *Watch again* or *Back*, and nothing plays by itself.
+- When a video is paused or ends, a Wigwam card covers YouTube's "More videos" and end-screen suggestions. Kids get *Keep watching*, *Watch again* or *Back*, and nothing plays by itself.
 - YouTube's full-screen button is turned off, because the card can't cover suggestions inside YouTube's full screen. The Android app and the iPad home-screen app are already full screen.
 - The player only accepts video IDs that are in the kid's own approved list.
 - YouTube's title, channel icon and logo still link to YouTube. **The Android app ignores those taps.** In a normal browser they open YouTube, so lock the device down as described above.
@@ -106,4 +106,4 @@ On `localhost` the admin page works without a token: it edits a local copy, and 
 | `shared.js` | Helpers, plus the blocked-word matcher and starter list (`SUGGESTED_TERMS`) |
 | `scripts/build-catalog.mjs` | Builds the catalog: YouTube Data API with a key, RSS feeds without one |
 | `.github/workflows/build.yml` | Builds on every push, nightly (incremental) and weekly (full), then deploys Pages |
-| `scripts/make-icons.mjs` | Regenerates the app icons |
+| `scripts/make-icons.py` | Makes the app icons from `icons/wigwam-source.webp` (needs Python and Pillow) |

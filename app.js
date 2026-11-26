@@ -280,8 +280,8 @@ async function refreshCatalog() {
     return;
   }
   initSpatialNav(app, { onBack: goBack });
-  window.tellyboxBack = goBack; // the Android app's Back button calls this
-  window.tellyboxResume = refreshCatalog; // the Android app calls this when it comes back on screen
+  window.wigwamBack = goBack; // the Android app's Back button calls this
+  window.wigwamResume = refreshCatalog; // the Android app calls this when it comes back on screen
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshCatalog(); });
   window.addEventListener('hashchange', render);
   if (!location.hash && index.profiles.length === 1) replace(`#/p/${enc(index.profiles[0].id)}`);

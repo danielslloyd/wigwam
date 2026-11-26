@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.danielslloyd.tellybox"
-    android:versionCode="2"
-    android:versionName="1.1">
+    package="io.github.danielslloyd.wigwam"
+    android:versionCode="3"
+    android:versionName="1.2">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:label="Tellybox"
+        android:label="Wigwam"
         android:icon="@mipmap/ic_launcher"
         android:theme="@android:style/Theme.Material.Light.NoActionBar.Fullscreen"
         android:usesCleartextTraffic="false"

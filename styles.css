@@ -104,7 +104,7 @@ button { font: inherit; color: inherit; }
 .pbig.off { background: #e7dccd; color: #b7a894; box-shadow: none; }
 .pnum { font-weight: 800; color: var(--muted); font-size: 1.1rem; }
 
-/* ---- player: YouTube's own player, with a slim Tellybox bar above it */
+/* ---- player: YouTube's own player, with a slim Wigwam bar above it */
 body.playing { background: #000; overflow: hidden; }
 .stage { position: fixed; inset: 0; display: flex; flex-direction: column; background: #000; color: #fff; }
 .topbar { flex: none; display: flex; align-items: center; gap: 14px; padding: max(10px, env(safe-area-inset-top)) 16px 10px; }

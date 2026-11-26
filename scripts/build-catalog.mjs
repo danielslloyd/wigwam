@@ -30,7 +30,7 @@ const TAGS = path.join(ROOT, 'data', 'tags.json');
 const KEY = process.env.YOUTUBE_API_KEY?.trim();
 const FULL = process.argv.includes('--full');
 const MODE = KEY ? 'api' : 'rss';
-const UA = 'Mozilla/5.0 (compatible; Tellybox catalog builder)';
+const UA = 'Mozilla/5.0 (compatible; Wigwam catalog builder)';
 
 const warnings = [];
 let apiCalls = 0;
