@@ -78,7 +78,15 @@
       "mjyhAo6Sfww",
       "4XqCVEltQBA",
       "UQbxbDju-rQ",
-      "Ps24A8WZfFk"
+      "Ps24A8WZfFk",
+      "2PvgilFhbeA",
+      "U7iZj48vNXw",
+      "BJz4Z8r96Eg",
+      "DzbNA7yTh-E",
+      "nI0rRkFsMC8",
+      "hjPqgiUjZjA",
+      "9IOQUcvhBfs",
+      "J5CNmHRTj4c"
     ]
   },
   "profiles": [
@@ -99,7 +107,8 @@
     {
       "handle": "@Numberblocks",
       "profiles": [
-        "piggle"
+        "piggle",
+        "potamus"
       ],
       "id": "UCPlwvN0w4qFSP1FllALB92w",
       "title": "Numberblocks"
@@ -157,7 +166,8 @@
     {
       "handle": "@xkcd_whatif",
       "profiles": [
-        "piggle"
+        "piggle",
+        "potamus"
       ],
       "id": "UC6IxnFzHofFJ5X2PycSMsww",
       "title": "xkcd's What If?"
@@ -189,7 +199,8 @@
     {
       "handle": "@bbcearth",
       "profiles": [
-        "piggle"
+        "piggle",
+        "potamus"
       ],
       "id": "UCwmZiChSryoWQCZMIQezgTg",
       "title": "BBC Earth"
@@ -197,7 +208,8 @@
     {
       "handle": "@HALIDONMUSIC",
       "profiles": [
-        "piggle"
+        "piggle",
+        "potamus"
       ],
       "id": "UCyOfqgtsQaM3S-VZnsYnHjQ",
       "title": "HALIDONMUSIC"
@@ -282,17 +294,13 @@
     },
     {
       "handle": "@BusinessInsider",
-      "profiles": [
-        "piggle"
-      ],
+      "profiles": [],
       "id": "UCcyq283he07B7_KUX07mmtA",
       "title": "Business Insider"
     },
     {
       "handle": "@od_form",
-      "profiles": [
-        "piggle"
-      ],
+      "profiles": [],
       "id": "UCTBVK8fklo3qMQdeIUG9vBw",
       "title": "od form"
     },
@@ -314,9 +322,7 @@
     },
     {
       "handle": "@TangMathGames",
-      "profiles": [
-        "piggle"
-      ],
+      "profiles": [],
       "id": "UC7zc1YZ3-8c2RBDZ5tMj3Og",
       "title": "Tang Math Games"
     },
@@ -343,7 +349,8 @@
     {
       "handle": "@northlandscapes",
       "profiles": [
-        "piggle"
+        "piggle",
+        "potamus"
       ],
       "id": "UCWr7XYWea0tPN2Ha-CSP89w",
       "title": "Northlandscapes, Jan Erik Waider"
@@ -609,19 +616,25 @@
     },
     {
       "handle": "@theslowmoguys",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCUK0HBIBWgM2c4vsPhkYY4w",
       "title": "The Slow Mo Guys"
     },
     {
       "handle": "@smartereveryday",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC6107grRI4m0o2-emgoDnAA",
       "title": "SmarterEveryDay"
     },
     {
       "handle": "@MinutePhysics",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCUHW94eEFW7hkUMVaZz4eDg",
       "title": "minutephysics"
     },
@@ -727,6 +740,12 @@
       ],
       "id": "UCOlX9Ymfc5wKEJR69jSRE1A",
       "title": "How2DrawAnimals"
+    },
+    {
+      "handle": "@EnglishHeritage",
+      "profiles": [
+        "piggle"
+      ]
     }
   ],
   "playlists": [
