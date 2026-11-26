@@ -242,9 +242,7 @@
     },
     {
       "handle": "@matthiaswandel",
-      "profiles": [
-        "piggle"
-      ],
+      "profiles": [],
       "id": "UCckETVOT59aYw80B36aP9vw",
       "title": "MatthiasWandel"
     },
@@ -400,13 +398,17 @@
     },
     {
       "handle": "@ImperialWarMuseums",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC3uAjWoLZ4bSi6qI9SjALxA",
       "title": "Imperial War Museums"
     },
     {
       "handle": "@britishmuseum",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCvpQ-l09fCVxJd3urZbxzHg",
       "title": "The British Museum"
     },
@@ -682,9 +684,57 @@
       ],
       "id": "UC-2KSeUU5SMCX6XLRD-AEvw",
       "title": "Explore Live Nature Cams"
+    },
+    {
+      "handle": "@my_mechanics_clips",
+      "profiles": [
+        "piggle"
+      ],
+      "shorts": true
+    },
+    {
+      "handle": "@BrilliantClassics",
+      "profiles": [
+        "piggle"
+      ]
+    },
+    {
+      "handle": "@MinnoKids",
+      "profiles": [
+        "piggle",
+        "potamus"
+      ]
+    },
+    {
+      "handle": "@AmericasTestKitchen",
+      "profiles": [
+        "piggle",
+        "potamus"
+      ]
+    },
+    {
+      "handle": "@How2DrawAnimals",
+      "profiles": [
+        "piggle"
+      ]
     }
   ],
-  "playlists": [],
+  "playlists": [
+    {
+      "id": "PL39_ud5aKSvkAw79T2n-WODhcHgUWXJcv",
+      "title": "Impossible Engineering",
+      "profiles": [
+        "piggle"
+      ]
+    },
+    {
+      "id": "PL39_ud5aKSvnYDhKdB7wTDUZRiE8RaJat",
+      "title": "How It's Made",
+      "profiles": [
+        "piggle"
+      ]
+    }
+  ],
   "videos": [],
   "blocked": []
 }
