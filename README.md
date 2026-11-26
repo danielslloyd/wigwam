@@ -58,21 +58,28 @@ Tellybox shows only approved videos, but it can't stop a kid leaving the app and
   1. In Safari, open the site, tap **Share → Add to Home Screen**, and use that icon from then on.
   2. Turn on **Settings → Accessibility → Guided Access**. Open Tellybox and triple-click the side or home button to lock the iPad into it.
   3. Use **Screen Time → Content & Privacy → Allowed Apps** to hide the YouTube app and other browsers.
-- **Android tablet:** use **App pinning** for the home-screen app, or a Family Link profile.
+- **Android tablet:** install the Tellybox app (below), then use **App pinning** or a Family Link profile to keep kids in it.
 - **Laptop / Chromebook:** run Chrome in kiosk mode (`chrome --kiosk https://<you>.github.io/<repo>/`), or use a supervised profile with a site allowlist.
 - **TV:** open the site in the TV's browser (Fire TV Silk, Google TV, or a smart-TV browser) and use the remote's arrow keys. A laptop on HDMI also works. **Don't cast to the YouTube TV app**, because that brings back autoplay and recommendations.
 
 Before relying on a content filter that blocks `youtube.com`, test that videos still play. The embed player loads from YouTube's domains.
 
-## How the player is locked down
+## Android app
 
-- It uses YouTube's IFrame API with `controls=0`, `rel=0`, `fs=0` and `disablekb=1`, on the privacy-enhanced `youtube-nocookie.com` host.
-- A transparent layer covers the video, so YouTube's title, channel link, logo and "Watch on YouTube" can't be tapped. Tellybox draws its own big buttons.
-- When the video is paused or ends, a Tellybox card covers YouTube's "More videos" and end-screen suggestions.
+`android/` holds a small Android app that opens the site full screen with no address bar. It only loads Tellybox's own pages: links to YouTube or anywhere else are ignored, and the grown-ups page is blocked inside it. The tablet's Back button acts as Tellybox's Back, and the screen stays awake while a video plays. It isn't in any app store; you install it over USB.
+
+1. Install a JDK 17+ and the Android SDK (Android Studio installs both). On the tablet, turn on **Developer options → USB debugging** and plug it in.
+2. Run `bash android/build.sh --install` (Git Bash on Windows). To point it at a different site, pass the URL: `bash android/build.sh https://you.github.io/repo/ --install`.
+
+## How the player works
+
+- Videos play in YouTube's own embed player, with YouTube's own controls, on the privacy-enhanced `youtube-nocookie.com` host (`rel=0`, `iv_load_policy=3`, `fs=0`).
+- When a video is paused or ends, a Tellybox card covers YouTube's "More videos" and end-screen suggestions. Kids get *Keep watching*, *Watch again* or *Back*, and nothing plays by itself.
+- YouTube's full-screen button is turned off, because the card can't cover suggestions inside YouTube's full screen. The Android app and the iPad home-screen app are already full screen.
 - The player only accepts video IDs that are in the kid's own approved list.
-- If a browser (usually iOS Safari) won't start playback from Tellybox's button, the cover steps aside for one tap on YouTube's own play button. The layer comes back as soon as the video starts.
+- YouTube's title, channel icon and logo still link to YouTube. **The Android app ignores those taps.** In a normal browser they open YouTube, so lock the device down as described above.
 
-This is meant for your own family's use. YouTube's developer policies don't allow covering or replacing parts of its player, so don't publish it as a product.
+This is meant for your own family's use. YouTube's developer policies don't allow covering parts of its player, so don't publish it as a product.
 
 ## Running locally
 
@@ -89,7 +96,7 @@ On `localhost` the admin page works without a token: it edits a local copy, and 
 | File | What it does |
 |---|---|
 | `index.html`, `app.js`, `styles.css` | Kids' app: profiles → channels → finite video pages |
-| `player.js` | Locked-down YouTube player with custom controls and pause/end covers |
+| `player.js` | YouTube's player with a Back bar and pause/end covers |
 | `nav.js` | Arrow-key navigation for keyboards and TV remotes |
 | `admin.html`, `admin.js` | Grown-ups' page; saves to GitHub through the Contents API |
 | `data/whitelist.json` | Source of truth: settings (Shorts, blocked words, exceptions), profiles, channels, playlists, videos, hidden videos |

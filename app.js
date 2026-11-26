@@ -243,6 +243,7 @@ function renderPlayer(p, vid) {
     return;
   }
   initSpatialNav(app, { onBack: goBack });
+  window.tellyboxBack = goBack; // the Android app's Back button calls this
   window.addEventListener('hashchange', render);
   if (!location.hash && catalog.profiles.length === 1) replace(`#/p/${enc(catalog.profiles[0].id)}`);
   render();

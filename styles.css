@@ -104,23 +104,17 @@ button { font: inherit; color: inherit; }
 .pbig.off { background: #e7dccd; color: #b7a894; box-shadow: none; }
 .pnum { font-weight: 800; color: var(--muted); font-size: 1.1rem; }
 
-/* ---- player */
+/* ---- player: YouTube's own player, with a slim Tellybox bar above it */
 body.playing { background: #000; overflow: hidden; }
-.stage { position: fixed; inset: 0; background: #000; color: #fff; overflow: hidden; }
-.frame, .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.shield { position: absolute; inset: 0; z-index: 2; }
-.shield.tap-through { pointer-events: none; }
-
-.topbar, .controls { position: absolute; left: 0; right: 0; z-index: 4; display: flex; align-items: center; gap: 14px; transition: opacity .25s; }
-.topbar { top: 0; padding: max(14px, env(safe-area-inset-top)) 20px 30px; background: linear-gradient(rgba(0,0,0,.7), transparent); }
-.controls { bottom: 0; padding: 30px 20px max(16px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,.75)); }
-.topbar.hidden, .controls.hidden { opacity: 0; pointer-events: none; }
-.ptitle { font-weight: 800; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 4px #000; }
-.pbtn { flex: none; min-width: 58px; height: 58px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 1.3rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(6px); }
-.pbtn.big { min-width: 76px; height: 76px; font-size: 2rem; background: var(--accent); }
+.stage { position: fixed; inset: 0; display: flex; flex-direction: column; background: #000; color: #fff; }
+.topbar { flex: none; display: flex; align-items: center; gap: 14px; padding: max(10px, env(safe-area-inset-top)) 16px 10px; }
+.ptitle { font-weight: 800; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbtn { flex: none; min-width: 58px; height: 58px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 1.3rem; font-weight: 800; cursor: pointer; }
 .pbtn:focus-visible { outline-color: #fff; }
-#scrub { flex: 1; min-width: 80px; height: 40px; accent-color: var(--accent); cursor: pointer; }
-.time { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.frame { position: relative; flex: 1; min-height: 0; margin-bottom: env(safe-area-inset-bottom); }
+.frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+/* Swallows taps on YouTube's "More videos" button and logo (bottom-right of its control bar). */
+.yt-guard { position: absolute; right: 0; bottom: 0; width: min(380px, 100%); height: 60px; z-index: 2; }
 
 .cover {
   position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; text-align: center; padding: 24px;
@@ -128,8 +122,8 @@ body.playing { background: #000; overflow: hidden; }
 }
 .cover.hidden { display: none; }
 .cover-inner { display: flex; flex-direction: column; align-items: center; gap: 18px; max-width: 900px; }
-.cover-title { margin: 0; font-size: clamp(1.4rem, 3.5vw, 2.4rem); text-shadow: 0 2px 8px #000; }
-.cover-msg { font-size: 1.3rem; min-height: 1em; }
+.cover-msg { font-size: 1.6rem; font-weight: 800; text-shadow: 0 2px 8px #000; }
+.cover-msg:empty { display: none; }
 .cover-actions { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
 .cbtn { border: 0; padding: 18px 30px; border-radius: 999px; font-size: 1.35rem; font-weight: 800; cursor: pointer; background: rgba(255,255,255,.92); color: var(--ink); }
 .cbtn.primary { background: var(--accent); color: #fff; font-size: 1.6rem; padding: 22px 40px; }
@@ -139,9 +133,6 @@ body.playing { background: #000; overflow: hidden; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px 12px; }
   .sources { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
   .source-art { width: 100px; }
-  .controls { gap: 8px; padding-left: 10px; padding-right: 10px; }
-  .pbtn { min-width: 48px; height: 48px; padding: 0 10px; font-size: 1.05rem; }
-  .pbtn.big { min-width: 62px; height: 62px; }
-  .time { display: none; }
+  .pbtn { min-width: 48px; height: 48px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation-duration: 3s !important; } }
