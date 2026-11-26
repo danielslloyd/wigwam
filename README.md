@@ -58,7 +58,7 @@ Wigwam shows only approved videos, but it can't stop a kid leaving the app and o
   1. In Safari, open the site, tap **Share → Add to Home Screen**, and use that icon from then on.
   2. Turn on **Settings → Accessibility → Guided Access**. Open Wigwam and triple-click the side or home button to lock the iPad into it.
   3. Use **Screen Time → Content & Privacy → Allowed Apps** to hide the YouTube app and other browsers.
-- **Android tablet:** install the Wigwam app (below), then use **App pinning** or a Family Link profile to keep kids in it.
+- **Android tablet:** install the Wigwam app (below), drag its icon from the app list to the home screen, then use **App pinning** or a Family Link profile to keep kids in it.
 - **Laptop / Chromebook:** run Chrome in kiosk mode (`chrome --kiosk https://<you>.github.io/<repo>/`), or use a supervised profile with a site allowlist.
 - **TV:** open the site in the TV's browser (Fire TV Silk, Google TV, or a smart-TV browser) and use the remote's arrow keys. A laptop on HDMI also works. **Don't cast to the YouTube TV app**, because that brings back autoplay and recommendations.
 

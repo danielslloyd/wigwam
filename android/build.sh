@@ -32,7 +32,8 @@ rm -rf "$out"; mkdir -p "$out/res/mipmap-xxxhdpi" "$out/gen/io/github/danielsllo
 echo "Building Wigwam for $SITE"
 
 # Resources and manifest (plain http is only allowed for a test build)
-cp "$here/../icons/icon-192.png" "$out/res/mipmap-xxxhdpi/ic_launcher.png"
+cp -r "$here/res/." "$out/res/"   # adaptive icon (Android 8+)
+cp "$here/../icons/icon-192.png" "$out/res/mipmap-xxxhdpi/ic_launcher.png"   # older Androids
 cleartext=false; [[ "$SITE" == http://* ]] && cleartext=true
 sed "s/usesCleartextTraffic=\"false\"/usesCleartextTraffic=\"$cleartext\"/" "$here/AndroidManifest.xml" > "$out/AndroidManifest.xml"
 "$BT/aapt2$EXE" compile -o "$out/res.zip" --dir "$out/res"

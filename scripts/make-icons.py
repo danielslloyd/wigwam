@@ -3,7 +3,8 @@
 from pathlib import Path
 from PIL import Image
 
-ICONS = Path(__file__).resolve().parent.parent / 'icons'
+ROOT = Path(__file__).resolve().parent.parent
+ICONS = ROOT / 'icons'
 SKY = (205, 234, 247, 255)
 
 src = Image.open(ICONS / 'wigwam-source.webp').convert('RGBA')
@@ -21,4 +22,7 @@ for size in (180, 192, 512):
     place(size, 0.72, SKY).convert('RGB').save(ICONS / f'icon-{size}.png', optimize=True)
 # Browser-tab icon: no background, as big as it fits.
 place(64, 1.0, None).save(ICONS / 'favicon.png', optimize=True)
+# Android adaptive icon foreground (432px = 108dp at xxxhdpi). Launchers show only the
+# middle 72dp, so the wigwam is kept to half the canvas.
+place(432, 0.5, None).save(ROOT / 'android/res/mipmap-xxxhdpi/ic_launcher_foreground.png', optimize=True)
 print('Wrote', ', '.join(p.name for p in sorted(ICONS.glob('*.png'))))
