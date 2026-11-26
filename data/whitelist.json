@@ -639,37 +639,49 @@
       "handle": "@OutdoorBoys",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UCfpCQ89W9wjkHc8J_6eTbBg",
+      "title": "Outdoor Boys"
     },
     {
       "handle": "@NatGeo",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UCpVm7bg6pXKo1Pr6k5kxG9A",
+      "title": "National Geographic"
     },
     {
       "handle": "@natgeokids",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UCXVCgDuD_QCkI7gTKU7-tpg",
+      "title": "Nat Geo Kids"
     },
     {
       "handle": "@BBCEarthKids",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UCO_DaPp4ifhMAmiyybSLx9w",
+      "title": "BBC Earth Kids"
     },
     {
       "handle": "@cornell_lab",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UC5Lz88Rt3GT75YT2ORAmaMQ",
+      "title": "Cornell Lab of Ornithology"
     },
     {
       "url": "https://www.youtube.com/c/explorelivenaturecams",
       "profiles": [
         "piggle"
-      ]
+      ],
+      "id": "UC-2KSeUU5SMCX6XLRD-AEvw",
+      "title": "Explore Live Nature Cams"
     }
   ],
   "playlists": [],
