@@ -1,0 +1,93 @@
+{
+  "settings": {
+    "allowShorts": false,
+    "blockedTerms": [
+      "scary",
+      "scariest",
+      "horror",
+      "creepy",
+      "creepiest",
+      "jumpscare*",
+      "jump scare*",
+      "creepypasta",
+      "demon",
+      "demons",
+      "zombie*",
+      "gore",
+      "gory",
+      "blood",
+      "bloody",
+      "kill",
+      "kills",
+      "killed",
+      "killing",
+      "murder*",
+      "gun",
+      "guns",
+      "weapon*",
+      "prank*",
+      "sexy",
+      "sex",
+      "nsfw",
+      "18+",
+      "drunk",
+      "beer",
+      "swear*",
+      "fnaf",
+      "five nights at freddy*",
+      "huggy wuggy",
+      "poppy playtime",
+      "rainbow friends",
+      "siren head",
+      "skibidi",
+      "momo challenge",
+      "backrooms",
+      "brainrot"
+    ],
+    "allowAnyway": []
+  },
+  "profiles": [
+    {
+      "id": "fox",
+      "name": "Fox",
+      "emoji": "🦊",
+      "color": "#f97316"
+    },
+    {
+      "id": "owl",
+      "name": "Owl",
+      "emoji": "🦉",
+      "color": "#6366f1"
+    }
+  ],
+  "channels": [
+    {
+      "handle": "@SciShowKids",
+      "profiles": [
+        "fox",
+        "owl"
+      ],
+      "id": "UCRFIPG2u1DxKLNuE3y2SjHA",
+      "title": "SciShow Kids"
+    },
+    {
+      "handle": "@Numberblocks",
+      "profiles": [
+        "owl"
+      ],
+      "id": "UCPlwvN0w4qFSP1FllALB92w",
+      "title": "Numberblocks"
+    }
+  ],
+  "playlists": [],
+  "videos": [
+    {
+      "id": "4VinwOQkHGg",
+      "title": "The Yuckiest Animals | SciShow Kids Compilation",
+      "profiles": [
+        "fox"
+      ]
+    }
+  ],
+  "blocked": []
+}

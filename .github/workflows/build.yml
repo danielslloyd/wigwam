@@ -1,0 +1,64 @@
+name: Build catalog & deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 5 * * 1-6'   # daily incremental update
+    - cron: '0 5 * * 0'     # weekly full rebuild (drops deleted videos)
+  workflow_dispatch:
+    inputs:
+      full:
+        description: 'Full rebuild'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Runs queue up instead of overlapping, so two quick admin saves can't race.
+concurrency:
+  group: build-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main   # latest main, including a catalog committed by a previous queued run
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build catalog
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: node scripts/build-catalog.mjs ${{ (github.event.schedule == '0 5 * * 0' || inputs.full) && '--full' || '' }}
+
+      - name: Commit catalog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if ! git diff --cached --quiet; then
+            git commit -m "Update catalog"
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
