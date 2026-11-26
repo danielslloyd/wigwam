@@ -51,29 +51,20 @@
       "id": "piggle",
       "name": "Piggle",
       "emoji": "🐷",
-      "color": "#ec4899"
+      "color": "#78716c"
     },
     {
       "id": "potamus",
       "name": "Potamus",
       "emoji": "🦛",
-      "color": "#6366f1"
+      "color": "#ec4899"
     }
   ],
   "channels": [
     {
-      "handle": "@SciShowKids",
-      "profiles": [
-        "piggle",
-        "potamus"
-      ],
-      "id": "UCRFIPG2u1DxKLNuE3y2SjHA",
-      "title": "SciShow Kids"
-    },
-    {
       "handle": "@Numberblocks",
       "profiles": [
-        "potamus"
+        "piggle"
       ],
       "id": "UCPlwvN0w4qFSP1FllALB92w",
       "title": "Numberblocks"
@@ -86,19 +77,25 @@
     },
     {
       "handle": "@planet-wild",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC6QFT2c2MJxID-vxHDeX9XQ",
       "title": "Planet Wild"
     },
     {
       "handle": "@BaumgartnerRestoration",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCvZe6ZCbF9xgbbbdkiodPKQ",
       "title": "Baumgartner Restoration"
     },
     {
       "handle": "@StuffMadeHere",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCj1VqrHhDte54oLgPG4xpuQ",
       "title": "Stuff Made Here"
     },
@@ -110,7 +107,9 @@
     },
     {
       "handle": "@essentialcraftsman",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCzr30osBdTmuFUS8IfXtXmg",
       "title": "Essential Craftsman"
     },
@@ -122,57 +121,51 @@
     },
     {
       "handle": "@xkcd_whatif",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC6IxnFzHofFJ5X2PycSMsww",
       "title": "xkcd's What If?"
     },
     {
       "handle": "@Iliketomakestuff",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC6x7GwJxuoABSosgVXDYtTw",
       "title": "I Like To Make Stuff"
     },
     {
-      "handle": "@TwoMinutePapers",
-      "profiles": [],
-      "id": "UCbfYPyITQ-7l4upoX8nvctg",
-      "title": "Two Minute Papers"
-    },
-    {
       "handle": "@hrSinfonieorchester",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCiyuYC0D4-AO0AonCfMifPQ",
       "title": "hr-Sinfonieorchester – Frankfurt Radio Symphony"
     },
     {
       "handle": "@cosma.",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC28l88GMXXqZYfY0Ru9h50w",
       "title": "Seán Doran"
     },
     {
       "handle": "@bbcearth",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCwmZiChSryoWQCZMIQezgTg",
       "title": "BBC Earth"
     },
     {
-      "handle": "@TheDetailGeek",
-      "profiles": [],
-      "id": "UCAQHQEO4QpI5dXtr3vLoFCg",
-      "title": "The Detail Geek"
-    },
-    {
       "handle": "@HALIDONMUSIC",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCyOfqgtsQaM3S-VZnsYnHjQ",
       "title": "HALIDONMUSIC"
-    },
-    {
-      "handle": "@BeauMiles",
-      "profiles": [],
-      "id": "UCm325cMiw9B15xl22_gr6Dw",
-      "title": "Beau Miles"
     },
     {
       "handle": "@PracticalEngineeringChannel",
@@ -185,12 +178,6 @@
       "profiles": [],
       "id": "UCKp44bWWZIiOPShPN_ytShw",
       "title": "The Wood Whisperer"
-    },
-    {
-      "handle": "@WebDevSimplified",
-      "profiles": [],
-      "id": "UCFbNIlppjAuEX4znoulh0Cw",
-      "title": "Web Dev Simplified"
     },
     {
       "handle": "@chrisnotap",
@@ -217,110 +204,90 @@
       "title": "The Action Lab"
     },
     {
-      "handle": "@vancouvercarpenter",
-      "profiles": [],
-      "id": "UCbZdXox6mKHdcT2QdVT-goQ",
-      "title": "Vancouver Carpenter"
-    },
-    {
-      "handle": "@athleanx",
-      "profiles": [],
-      "id": "UCe0TLA0EsQbE-MjuHXevj2A",
-      "title": "ATHLEAN-X™"
-    },
-    {
-      "handle": "@StumpyNubs",
-      "profiles": [],
-      "id": "UCstwpLSByklww1YojZN-KiQ",
-      "title": "Stumpy Nubs (James Hamilton)"
-    },
-    {
-      "handle": "@RexKrueger",
-      "profiles": [],
-      "id": "UCj4SLNED1DiNPHComZTCbzw",
-      "title": "Rex Krueger"
-    },
-    {
       "handle": "@matthiaswandel",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCckETVOT59aYw80B36aP9vw",
       "title": "MatthiasWandel"
     },
     {
       "handle": "@InheritanceMachining",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCVI8Mfisni3GaobL1e2JOIQ",
       "title": "Inheritance Machining"
     },
     {
       "handle": "@TechnologyConnections",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCy0tKL1T7wFoYcxCe0xjN6Q",
       "title": "Technology Connections"
     },
     {
       "handle": "@twcdesign",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC9bZy627A--NKLGtf9LnAJA",
       "title": "TWCDesign"
     },
     {
       "handle": "@TysyTube",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCIGEtjevANE0Nqain3EqNSg",
       "title": "TysyTube Restoration"
     },
     {
       "handle": "@mymechanics",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCMrMVIBtqFW6O0-MWq26gqw",
       "title": "my mechanics"
     },
     {
       "handle": "@BusinessInsider",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCcyq283he07B7_KUX07mmtA",
       "title": "Business Insider"
     },
     {
-      "handle": "@MichaelAlm",
-      "profiles": [],
-      "id": "UCFPi0bIn4Bc3Vkd9T-dKuzw",
-      "title": "Michael Alm (ALM FAB)"
-    },
-    {
-      "handle": "@katzmosestools",
-      "profiles": [],
-      "id": "UCXBNF-A7QlYT3tT-B9N4ElA",
-      "title": "Jonathan Katz-Moses"
-    },
-    {
       "handle": "@od_form",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCTBVK8fklo3qMQdeIUG9vBw",
       "title": "od form"
     },
     {
-      "handle": "@treadathletics",
-      "profiles": [],
-      "id": "UCANTSXGjfXdmXzlAbELdWXw",
-      "title": "Tread Athletics"
-    },
-    {
       "handle": "@The_Art_Coach",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCo26P9-hOODP5yNTF3hYeAw",
       "title": "The Art Coach"
     },
     {
       "handle": "@Olympics",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCTl3QQTvqHFjurroKxexy2Q",
       "title": "Olympic Games"
     },
     {
       "handle": "@TangMathGames",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC7zc1YZ3-8c2RBDZ5tMj3Og",
       "title": "Tang Math Games"
     },
@@ -337,20 +304,18 @@
       "title": "Florian Gadsby"
     },
     {
-      "handle": "@chesterkrsk",
-      "profiles": [],
-      "id": "UCmRBWspht0wl5JIAbHndOKQ",
-      "title": "CHEST'ER"
-    },
-    {
       "handle": "@bach",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC2kF6qdHRTM_hDYfEmzkS9w",
       "title": "Netherlands Bach Society"
     },
     {
       "handle": "@northlandscapes",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCWr7XYWea0tPN2Ha-CSP89w",
       "title": "Northlandscapes, Jan Erik Waider"
     },
@@ -359,12 +324,6 @@
       "profiles": [],
       "id": "UCimOR5IKca6KfhT-SnBv_lg",
       "title": "The Dusty Lumber Co"
-    },
-    {
-      "handle": "@ForgottenWeapons",
-      "profiles": [],
-      "id": "UCrfKGpvbEQXcbe68dzXgJuA",
-      "title": "Forgotten Weapons"
     },
     {
       "handle": "@YourFoodLab",
@@ -377,12 +336,6 @@
       "profiles": [],
       "id": "UCEHCDn_BBnk3uTK1M64ptyw",
       "title": "Chef Ranveer Brar"
-    },
-    {
-      "handle": "@adamottavinozero",
-      "profiles": [],
-      "id": "UCehtOTJKya1dlVBpmW1FeUg",
-      "title": "Adam Ottavino"
     },
     {
       "handle": "@OurOwnDevices1",
@@ -401,18 +354,6 @@
       "profiles": [],
       "id": "UC5_Y-BKzq1uW_2rexWkUzlA",
       "title": "New Mind"
-    },
-    {
-      "handle": "@BlacktailStudio",
-      "profiles": [],
-      "id": "UC6I0KzAD7uFTL1qzxyunkvA",
-      "title": "Blacktail Studio"
-    },
-    {
-      "handle": "@DwarkeshPatel",
-      "profiles": [],
-      "id": "UCXl4i9dYBrFOabk0xGmbkRA",
-      "title": "Dwarkesh Patel"
     },
     {
       "handle": "@ThomasCustomWoodworks",
@@ -439,12 +380,6 @@
       "title": "The British Museum"
     },
     {
-      "handle": "@wittworks",
-      "profiles": [],
-      "id": "UCGhyz7J9HmS0GT8Y_BR_crA",
-      "title": "wittworks"
-    },
-    {
       "handle": "@TheB1M",
       "profiles": [],
       "id": "UC6n8I1UDTKP1IWjQMg6_TwA",
@@ -458,33 +393,19 @@
     },
     {
       "handle": "@howridiculous",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC5f5IV0Bf79YLp_p9nfInRA",
       "title": "How Ridiculous"
     },
     {
       "handle": "@MarkRober",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCY1kMZp36IQSyNx_9h4mpCg",
       "title": "Mark Rober"
-    },
-    {
-      "handle": "@RyanReevesM",
-      "profiles": [],
-      "id": "UCrI5U0R293u9uveijefKyAA",
-      "title": "Ryan M Reeves"
-    },
-    {
-      "handle": "@worksbydesign",
-      "profiles": [],
-      "id": "UC0G7e3uCtTyKQy2vZbRaKxg",
-      "title": "Works By Design"
-    },
-    {
-      "handle": "@aarthificial",
-      "profiles": [],
-      "id": "UCtEwVJZABCd0tels2KIpKGQ",
-      "title": "aarthificial"
     },
     {
       "handle": "@JakeDontDraw",
@@ -499,64 +420,13 @@
       "title": "Southern Piedmont Natural History"
     },
     {
-      "handle": "@JeffNippard",
-      "profiles": [],
-      "id": "UC68TLK0mAEzUyHx5x5k-S1Q",
-      "title": "Jeff Nippard"
-    },
-    {
-      "handle": "@MichaelTchao",
-      "profiles": [],
-      "id": "UCKylJ-w8jEAGVzmOR0K73Jg",
-      "title": "Michael Tchao"
-    },
-    {
-      "handle": "@misterwootube",
-      "profiles": [],
-      "id": "UCq0EGvLTyy-LLT1oUSO_0FQ",
-      "title": "Eddie Woo"
-    },
-    {
-      "handle": "@drillagetime",
-      "profiles": [],
-      "id": "UC5EBi3gGpKbr8XpZpKAX85g",
-      "title": "Drillage Time"
-    },
-    {
       "handle": "@KnowArt",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCQnMw9GGDS3xO6fN5oae-4w",
-      "title": "Know Art"
-    },
-    {
-      "handle": "@SaveYourBooks",
-      "profiles": [],
-      "id": "UCJBBIfCt16lMtRiauQL964Q",
-      "title": "Save Your Books"
-    },
-    {
-      "handle": "@DIYCreators",
-      "profiles": [],
-      "id": "UChKlSK39lLg8eZHIX0iVzLA",
-      "title": "DIY Creators"
-    },
-    {
-      "handle": "@YASUHIROTV",
-      "profiles": [],
-      "id": "UCxrOgEVrJ9RxjQgdi-dYltg",
-      "title": "YASUHIRO TV"
-    },
-    {
-      "handle": "@Foureyes.Furniture",
-      "profiles": [],
-      "id": "UC1V-DYqsaj764uBis9-UDug",
-      "title": "Foureyes Furniture"
-    },
-    {
-      "handle": "@shaunboydmadethis",
-      "profiles": [],
-      "id": "UC9Lfb5wvuqFXaEiEJtJYAYg",
-      "title": "Shaun Boyd Made This"
+      "title": "Know Art",
+      "shorts": true
     },
     {
       "handle": "@pedullastudio",
@@ -577,12 +447,6 @@
       "title": "Marius Hornberger"
     },
     {
-      "handle": "@frankmakes",
-      "profiles": [],
-      "id": "UC3_VCOJMaivgcGqPCTePLBA",
-      "title": "frank howarth"
-    },
-    {
       "handle": "@PaskMakes",
       "profiles": [],
       "id": "UCNyGbxoEo6CQvaRVEvItxkA",
@@ -599,12 +463,6 @@
       "profiles": [],
       "id": "UC7FkqjV8SU5I8FCHXQSQe9Q",
       "title": "ISHITANI FURNITURE"
-    },
-    {
-      "handle": "@biglowwoodcraft",
-      "profiles": [],
-      "id": "UCLr-jDLpn25_hLKg4l0OQ8Q",
-      "title": "Biglow Woodcraft"
     },
     {
       "handle": "@processx",
@@ -625,14 +483,10 @@
       "title": "The Square Church"
     },
     {
-      "handle": "@derrickwith2rs",
-      "profiles": [],
-      "id": "UCSMvlpsjXmNjtorEh-XVgUg",
-      "title": "Derrickwith2rs"
-    },
-    {
       "handle": "@GrantDavis",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UCGH4o7taGSE-4FB8ZzJxhkA",
       "title": "Bricks Made Simple"
     },
@@ -641,12 +495,6 @@
       "profiles": [],
       "id": "UCAKr3jClRRyJSLWk8cP80-A",
       "title": "Engineering and architecture"
-    },
-    {
-      "handle": "@coilbook",
-      "profiles": [],
-      "id": "UCV1SycDpnU1A2dXqob6Aowg",
-      "title": "coilbook™ | Learning For Children"
     },
     {
       "handle": "@mokongtv123",
@@ -661,58 +509,10 @@
       "title": "The Centrifuge Camera Channel"
     },
     {
-      "handle": "@SebastianLague",
-      "profiles": [],
-      "id": "UCmtyQOKKmrMVaKuRXz02jbQ",
-      "title": "Sebastian Lague"
-    },
-    {
       "handle": "@misterpatina",
       "profiles": [],
       "id": "UCNBN5cN0UHyTsBmY3vs36xQ",
       "title": "Mister Patina"
-    },
-    {
-      "handle": "@createdesign",
-      "profiles": [],
-      "id": "UC_qfuHJ7Nz8C6g9ACTuAPEA",
-      "title": "create"
-    },
-    {
-      "handle": "@achappel",
-      "profiles": [],
-      "id": "UCe1Aj6VEO299Yq4WkXdoD3Q",
-      "title": "Alexandre Chappel"
-    },
-    {
-      "handle": "@Lam",
-      "profiles": [],
-      "id": "UCYIzu7SOyUyDPwMgUSspRYw",
-      "title": "Andrew Lam"
-    },
-    {
-      "handle": "@aragusea",
-      "profiles": [],
-      "id": "UC9_p50tH3WmMslWRWKnM7dQ",
-      "title": "Adam Ragusea"
-    },
-    {
-      "handle": "@realscience",
-      "profiles": [],
-      "id": "UC176GAQozKKjhz62H8u9vQQ",
-      "title": "Real Science"
-    },
-    {
-      "handle": "@StuffMadeHere2",
-      "profiles": [],
-      "id": "UCNlBbEpwffgWefkbRm73xxQ",
-      "title": "Stuff Made Here 2"
-    },
-    {
-      "handle": "@EverydayAstronaut",
-      "profiles": [],
-      "id": "UC6uKrU_WqJ1R2HMTY3LIx5Q",
-      "title": "Everyday Astronaut"
     },
     {
       "handle": "@Seeker",
@@ -727,24 +527,6 @@
       "title": "JSK-Studio"
     },
     {
-      "handle": "@maltzcreative",
-      "profiles": [],
-      "id": "UCNK_rjrGDa1STo0rIH_0p6A",
-      "title": "MaltzCreative"
-    },
-    {
-      "handle": "@10MinuteWorkshop",
-      "profiles": [],
-      "id": "UC_FksrzP3q-IuoWTiG501LQ",
-      "title": "Peter Millard"
-    },
-    {
-      "handle": "@BazBattles",
-      "profiles": [],
-      "id": "UCx-dJoP9hFCBloY9qodykvw",
-      "title": "BazBattles"
-    },
-    {
       "handle": "@DIYPerks",
       "profiles": [],
       "id": "UCUQo7nzH1sXVpzL92VesANw",
@@ -755,24 +537,6 @@
       "profiles": [],
       "id": "UCYmL90kuJusvrpVv3B60Rsg",
       "title": "Beauty of Science"
-    },
-    {
-      "handle": "@Bourbonmoth",
-      "profiles": [],
-      "id": "UCQ_bmgSrYsQS0LboA_tZpEw",
-      "title": "Bourbon Moth Woodworking"
-    },
-    {
-      "handle": "@colinfurze",
-      "profiles": [],
-      "id": "UCp68_FLety0O-n9QU6phsgw",
-      "title": "colinfurze"
-    },
-    {
-      "handle": "@Jeremy_Fielding",
-      "profiles": [],
-      "id": "UC_SLthyNX_ivd-dmsFgmJVg",
-      "title": "Jeremy Fielding"
     },
     {
       "handle": "@MilitaryHistoryVisualized",
@@ -811,28 +575,10 @@
       "title": "One Minute Workbench"
     },
     {
-      "handle": "@Fixthisbuildthat",
-      "profiles": [],
-      "id": "UCHYSw4XKO_q1GaChw5pxa-w",
-      "title": "Fix This Build That"
-    },
-    {
-      "handle": "@ThirdCoastCraftsman",
-      "profiles": [],
-      "id": "UCXbYtx6rZlbTHg8zY9AFZ-g",
-      "title": "Third Coast Craftsman"
-    },
-    {
       "handle": "@theslowmoguys",
       "profiles": [],
       "id": "UCUK0HBIBWgM2c4vsPhkYY4w",
       "title": "The Slow Mo Guys"
-    },
-    {
-      "handle": "@SmarterEveryDay2",
-      "profiles": [],
-      "id": "UC8VkNBOwvsTlFjoSnNSMmxw",
-      "title": "Smarter Every Day 2"
     },
     {
       "handle": "@smartereveryday",
@@ -847,12 +593,6 @@
       "title": "minutephysics"
     },
     {
-      "handle": "@AppliedScience",
-      "profiles": [],
-      "id": "UCivA7_KLKWo43tFcCkFvydw",
-      "title": "Applied Science"
-    },
-    {
       "handle": "@lignumchannel",
       "profiles": [],
       "id": "UCfSdejZFhw0rrDFlj9McyNA",
@@ -863,29 +603,9 @@
       "profiles": [],
       "id": "UC-3SbfTPJsL8fJAPKiVqBLg",
       "title": "Deep Look"
-    },
-    {
-      "handle": "@craighillcompany",
-      "profiles": [],
-      "id": "UCc6L2C09Gs6euMoUyqiz02Q",
-      "title": "Craighill"
-    },
-    {
-      "handle": "@3x3CustomTamar",
-      "profiles": [],
-      "id": "UC39z4_U8Kls0llAij3RRZAQ",
-      "title": "3x3Custom - Tamar"
     }
   ],
   "playlists": [],
-  "videos": [
-    {
-      "id": "4VinwOQkHGg",
-      "title": "The Yuckiest Animals | SciShow Kids Compilation",
-      "profiles": [
-        "piggle"
-      ]
-    }
-  ],
+  "videos": [],
   "blocked": []
 }
