@@ -2,7 +2,7 @@ name: Build catalog & deploy
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   schedule:
     - cron: '0 5 * * 1-6'   # daily incremental update
     - cron: '0 5 * * 0'     # weekly full rebuild (drops deleted videos)
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main   # latest main, including a catalog committed by a previous queued run
+          ref: master   # latest master, including a catalog committed by a previous queued run
 
       - uses: actions/setup-node@v4
         with:
@@ -50,8 +50,8 @@ jobs:
           git add data/
           if ! git diff --cached --quiet; then
             git commit -m "Update catalog"
-            git pull --rebase --autostash origin main
-            git push origin HEAD:main
+            git pull --rebase --autostash origin master
+            git push origin HEAD:master
           fi
 
       - uses: actions/configure-pages@v5
