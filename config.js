@@ -6,6 +6,6 @@ export const SUPABASE_KEY = 'sb_publishable_FfMPfnXIDgewTcySTWDNJA_PqNc2WoV';
 
 // Google OAuth client (Google Cloud → Google Auth Platform → Clients), used to connect
 // a grown-up's YouTube account. Its secret lives only in Supabase and GitHub secrets.
-export const GOOGLE_CLIENT_ID = '';
+export const GOOGLE_CLIENT_ID = '1059119587808-55inoudeq0d9s9jfl4u6dsl2udqlsnvf.apps.googleusercontent.com';
 
 export const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm';
