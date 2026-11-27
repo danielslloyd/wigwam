@@ -39,6 +39,7 @@ index.html (kids)    admin.html (grown-ups)
 - Tap the kid chips to choose who gets it, then **Approve**.
 - Every item in the lists has per-kid toggles. Use *What Fox sees* to view everything one kid can watch.
 - Tap a channel or playlist (or its **Videos** button) to open it. Every video is there, newest first. Tap a picture to hide it, tap again to show it. Search the titles to find videos, and **Hide all** or **Unhide all** of the matches at once. **Watch ↗** previews a video on YouTube.
+- Drag a channel or playlist by its **⠿** handle to change the order the kids see them in (or focus the handle and press ↑ / ↓).
 - **Filters → YouTube Shorts** switches Shorts on or off for every channel. Each channel's **Shorts** button overrides that for just that channel. Playlists and single videos always show what you picked, even if it's a Short.
 - **Filters → Blocked words** hides any channel or playlist video whose title contains one of the words. In API mode, YouTube tags are checked too.
   - Matching is by whole word and ignores capitals and accents, so *kill* doesn't block *skill* or *Killer Whales*.

@@ -632,8 +632,9 @@ function renderLists() {
     const info = c.id && catalog?.channels?.[c.id];
     const ids = (c.id && lists['ch:' + c.id]) || [];
     const key = 'ch:' + (c.id || i);
-    return `<div class="item">
+    return `<div class="item" data-idx="${i}">
       <div class="item-main">
+        ${grip('channels', i)}
         <button type="button" class="item-open" data-open="${esc(key)}" title="See this channel's videos">
           ${info?.thumb ? `<img class="avatar" src="${esc(info.thumb)}" alt="" referrerpolicy="no-referrer">` : `<div class="avatar">${esc(channelLabel(c).replace(/^@/, '')[0]?.toUpperCase() || '?')}</div>`}
         </button>
@@ -658,8 +659,9 @@ function renderLists() {
     const info = catalog?.playlists?.[p.id];
     const ids = lists['pl:' + p.id] || [];
     const key = 'pl:' + p.id;
-    return `<div class="item">
+    return `<div class="item" data-idx="${i}">
       <div class="item-main">
+        ${grip('playlists', i)}
         <button type="button" class="item-open" data-open="${esc(key)}" title="See this playlist's videos">
           ${info?.thumb ? `<img class="avatar wide" src="${esc(info.thumb)}" alt="">` : '<div class="avatar wide">▤</div>'}
         </button>
@@ -867,6 +869,98 @@ el('browser').addEventListener('click', (e) => {
     return change(`unhide ${ids.size} video${ids.size > 1 ? 's' : ''} matching “${words}” in ${info.title}`);
   }
   videoAction(t);
+});
+
+// ---------------------------------------------------------------- drag to reorder
+//
+// Grab a channel's or playlist's ⠿ handle and drag it up or down; the kids' app
+// shows them in the same order. Works with a mouse or a finger. With a keyboard,
+// focus the handle and press ↑ or ↓.
+
+const grip = (kind, i) =>
+  `<button type="button" class="grip" data-grip="${kind}" data-idx="${i}" aria-label="Move (drag, or press the up and down arrows)" title="Drag to move">⠿</button>`;
+
+const entryName = (e) => e.title || state.catalog?.channels?.[e.id]?.title || state.catalog?.playlists?.[e.id]?.title || e.handle || e.id;
+
+/** Puts the shown entries (indices in `order`, in their new order) back into the
+ *  slots they came from, so entries hidden by the kid filter stay where they were. */
+function reorder(kind, order) {
+  const list = state.wl[kind];
+  const slots = [...order].sort((a, b) => a - b);
+  const next = [...list];
+  slots.forEach((slot, n) => { next[slot] = list[order[n]]; });
+  if (next.every((e, n) => e === list[n])) return false;
+  state.wl[kind] = next;
+  return true;
+}
+
+function moved(kind, entry) {
+  const pos = state.wl[kind].indexOf(entry);
+  change(`move ${entryName(entry)} to number ${pos + 1}`);
+  return pos;
+}
+
+let drag = null;
+const rows = (box) => [...box.querySelectorAll(':scope > .item')];
+
+el('lists').addEventListener('pointerdown', (e) => {
+  const g = e.target.closest('[data-grip]');
+  if (!g || e.button > 0) return;
+  e.preventDefault();
+  const item = g.closest('.item');
+  drag = { kind: g.dataset.grip, item, box: item.parentElement, y: e.clientY };
+  g.setPointerCapture(e.pointerId);
+  item.classList.add('dragging');
+  document.body.classList.add('reordering');
+  requestAnimationFrame(autoScroll);
+});
+
+/** Moves the lifted row to where the pointer is. */
+function place() {
+  const { item, box, y } = drag;
+  const before = rows(box).find((n) => n !== item && (() => { const r = n.getBoundingClientRect(); return y < r.top + r.height / 2; })());
+  if (before) { if (item.nextElementSibling !== before) box.insertBefore(item, before); }
+  else if (box.lastElementChild !== item) box.appendChild(item);
+}
+
+// Scrolls the page while a row is held near the top or bottom edge.
+function autoScroll() {
+  if (!drag) return;
+  const bottom = innerHeight - (el('publish-bar').classList.contains('show') ? el('publish-bar').offsetHeight : 0);
+  const edge = 80;
+  const speed = drag.y < edge ? -(edge - drag.y) / 3 : drag.y > bottom - edge ? (drag.y - (bottom - edge)) / 3 : 0;
+  if (speed) { scrollBy(0, speed); place(); }
+  requestAnimationFrame(autoScroll);
+}
+
+document.addEventListener('pointermove', (e) => { if (drag) { drag.y = e.clientY; place(); } });
+
+function endDrag() {
+  if (!drag) return;
+  const { kind, item, box } = drag;
+  drag = null;
+  item.classList.remove('dragging');
+  document.body.classList.remove('reordering');
+  const entry = state.wl[kind][+item.dataset.idx];
+  if (reorder(kind, rows(box).map((n) => +n.dataset.idx))) moved(kind, entry);
+  else renderLists();
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
+el('lists').addEventListener('keydown', (e) => {
+  const g = e.target.closest('[data-grip]');
+  if (!g || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+  e.preventDefault();
+  const kind = g.dataset.grip;
+  const order = rows(g.closest('.item').parentElement).map((n) => +n.dataset.idx);
+  const at = order.indexOf(+g.dataset.idx), to = at + (e.key === 'ArrowUp' ? -1 : 1);
+  if (to < 0 || to >= order.length) return;
+  const entry = state.wl[kind][order[at]];
+  [order[at], order[to]] = [order[to], order[at]];
+  reorder(kind, order);
+  const pos = moved(kind, entry);
+  $(`[data-grip="${kind}"][data-idx="${pos}"]`)?.focus();
 });
 
 // ---------------------------------------------------------------- publish

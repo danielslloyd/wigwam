@@ -94,6 +94,13 @@
     .item-kids { display: flex; gap: 6px; flex-wrap: wrap; }
     .item-btns { display: flex; gap: 6px; }
     .empty { margin: 4px 0; }
+    .hint { margin: -6px 0 10px; }
+    .grip { border: 0; background: none; color: #b9ae9f; font-size: 1.4rem; line-height: 1; padding: 8px 2px; margin-right: -6px; border-radius: 8px; cursor: grab; touch-action: none; flex: none; }
+    .grip:hover { color: var(--ink); }
+    .grip:focus-visible { outline: 2px solid var(--accent); color: var(--ink); }
+    body.reordering, body.reordering * { cursor: grabbing !important; user-select: none; }
+    .item.dragging { position: relative; z-index: 2; background: #fff7ec; border-radius: 14px; box-shadow: 0 8px 24px rgba(60,40,20,.18); border-top-color: transparent; }
+    .item.dragging + .item { border-top-color: transparent; }
     #hidden { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
     .mini img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; display: block; background: var(--bg); }
     .mini-title { font-size: .85rem; font-weight: 700; line-height: 1.2; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -277,7 +284,7 @@
       <!-- Lists -->
       <div id="filter"></div>
       <div id="lists">
-        <section class="card"><h2>📺 Channels <span class="count" id="count-channels"></span></h2><div id="channels"></div></section>
+        <section class="card"><h2>📺 Channels <span class="count" id="count-channels"></span></h2><p class="muted hint">Kids see channels and playlists in this order. Drag ⠿ to move one.</p><div id="channels"></div></section>
         <section class="card" id="playlists-wrap" hidden><h2>▤ Playlists <span class="count" id="count-playlists"></span></h2><div id="playlists"></div></section>
         <section class="card"><h2>⭐ Single videos <span class="count" id="count-videos"></span></h2><div id="videos"></div></section>
         <section class="card" id="hidden-wrap" hidden><h2>🚫 Hidden videos <span class="count" id="count-hidden"></span></h2>
