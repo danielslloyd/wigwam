@@ -86,7 +86,22 @@
       "nI0rRkFsMC8",
       "hjPqgiUjZjA",
       "9IOQUcvhBfs",
-      "J5CNmHRTj4c"
+      "J5CNmHRTj4c",
+      "FmQkb66hGv8",
+      "-rv_q-lksDs",
+      "YM5infkHmm0",
+      "jyRMNeYcoHY",
+      "HmAYhUyYDNE",
+      "zAuUbGHPyds",
+      "in4TVFKqWXk",
+      "f3Fr7GSlD4s",
+      "A6BKMs9Fbd0",
+      "wB248A3htvw",
+      "7rXVnQt-3Y8",
+      "dzdfj-xzXAg",
+      "AhXaER53CHQ",
+      "g38kRk6YAA0",
+      "LXrxCT0NpHo"
     ]
   },
   "profiles": [
@@ -586,7 +601,9 @@
     },
     {
       "handle": "@ladbrestoration",
-      "profiles": [],
+      "profiles": [
+        "piggle"
+      ],
       "id": "UC8AvcEE8l8mHs-rZTXoynVQ",
       "title": "LADB Restoration"
     },
@@ -660,9 +677,7 @@
     },
     {
       "handle": "@NatGeo",
-      "profiles": [
-        "piggle"
-      ],
+      "profiles": [],
       "id": "UCpVm7bg6pXKo1Pr6k5kxG9A",
       "title": "National Geographic"
     },
@@ -726,10 +741,7 @@
     },
     {
       "handle": "@AmericasTestKitchen",
-      "profiles": [
-        "piggle",
-        "potamus"
-      ],
+      "profiles": [],
       "id": "UCxAS_aK7sS2x_bqnlJHDSHw",
       "title": "America's Test Kitchen"
     },
@@ -767,5 +779,10 @@
     }
   ],
   "videos": [],
-  "blocked": []
+  "blocked": [
+    "XvcyBSf_bXw",
+    "TdYZRqilFB8",
+    "AYuUIlcThb0",
+    "gf4sYCoKQVU"
+  ]
 }
