@@ -1,8 +1,16 @@
-// Parent admin page. Edits data/whitelist.json in the GitHub repo through the
-// GitHub API (with a personal access token kept only in this browser), or, on
-// localhost without a token, edits a local copy you can download.
+// Grown-ups' page. Signs in with Google and edits a wigwam in Supabase: its kids, the
+// channels, playlists and videos they may watch, hidden videos, hearts and filters.
+// Changes collect in the bar at the bottom until Publish; then the builder updates the
+// kids' files. Devices, co-parents, friends and YouTube are in admin-social.js.
 
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { esc, thumbUrl, timeAgo, fmtDuration, SUGGESTED_TERMS, termMatcher, normalizeTerms } from './shared.js';
+import { refreshSocial, renderSocial, finishYouTubeConnect, loadActivity } from './admin-social.js';
+
+export const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { storageKey: 'wigwam-admin', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' },
+});
 
 const LS = 'tb-admin:';
 const EMOJIS = ['🦊', '🦉', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐰', '🐨', '🦄', '🐙', '🦖', '🐳', '🐝', '🐞', '🚀', '⚽', '🌈', '⭐'];
@@ -11,26 +19,13 @@ const COLORS = ['#f97316', '#ef4444', '#ec4899', '#a855f7', '#6366f1', '#0ea5e9'
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (id) => document.getElementById(id);
 
-const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.hostname.endsWith('.localhost');
-
-const cfg = {
-  token: localStorage.getItem(LS + 'token') || '',
-  owner: localStorage.getItem(LS + 'owner') || '',
-  repo: localStorage.getItem(LS + 'repo') || '',
-};
-// On GitHub Pages the address says which repo this is, so a renamed repo just works.
-if (location.hostname.endsWith('.github.io')) {
-  cfg.owner = location.hostname.split('.')[0];
-  cfg.repo = location.pathname.split('/').filter(Boolean)[0] || `${cfg.owner}.github.io`;
-  if (cfg.repo.endsWith('.html')) cfg.repo = `${cfg.owner}.github.io`;
-}
-
-const state = {
-  mode: null,          // 'github' | 'local'
-  wl: null,            // working copy of whitelist.json
+export const state = {
+  user: null,          // the signed-in grown-up
+  wigwams: [],         // the wigwams they belong to: [{ id, name, role, share_with_friends, built_at }]
+  wigwam: null,        // id of the one being edited
+  wl: null,            // working copy: { profiles, channels, playlists, videos, blocked, hearts, settings }
   original: '',        // JSON of the last published version
-  sha: null,           // GitHub blob sha of whitelist.json
-  catalog: null,       // live catalog.json (titles, thumbnails, counts)
+  catalog: null,       // the wigwam's admin/catalog.json (titles, thumbnails, counts)
   log: [],             // human-readable list of unpublished changes
   filter: 'all',       // which kid's view the lists show
   editingKid: null,
@@ -51,7 +46,7 @@ function b64enc(str) {
 }
 const b64dec = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, '')), (c) => c.charCodeAt(0)));
 
-function toast(msg, kind = '') {
+export function toast(msg, kind = '') {
   const t = el('toast');
   t.textContent = msg; t.className = `toast show ${kind}`;
   clearTimeout(toast.timer);
@@ -59,7 +54,7 @@ function toast(msg, kind = '') {
 }
 
 function normalize(wl) {
-  for (const k of ['profiles', 'channels', 'playlists', 'videos', 'blocked']) wl[k] ??= [];
+  for (const k of ['profiles', 'channels', 'playlists', 'videos', 'blocked', 'hearts']) wl[k] ??= [];
   wl.settings ??= {};
   wl.settings.allowShorts ??= false;
   wl.settings.blockedTerms ??= [];
@@ -97,10 +92,11 @@ function hiddenReason(id) {
 }
 const shortsFor = (c) => (typeof c.shorts === 'boolean' ? c.shorts : state.wl.settings.allowShorts);
 const serialize = (wl) => JSON.stringify(wl, null, 2) + '\n';
-const dirty = () => state.wl && serialize(state.wl) !== state.original;
+export const dirty = () => state.wl && serialize(state.wl) !== state.original;
 const kidById = (id) => state.wl.profiles.find((p) => p.id === id);
 const kidNames = (ids) => ids.map((id) => kidById(id)?.name).filter(Boolean).join(', ') || 'nobody';
-function change(msg) { state.log.push(msg); renderAll(); }
+/** Records an unpublished change (or just redraws, with no message). */
+export function change(msg) { if (msg) state.log.push(msg); renderAll(); }
 
 // ---------------------------------------------------------------- YouTube link parsing
 
@@ -145,108 +141,247 @@ const sameChannel = (a, b) => (a.id && a.id === b.id) || (a.handle && b.handle &
   || (a.username && a.username === b.username) || (a.url && a.url === b.url);
 const channelLabel = (c) => c.title || c.handle || c.username || c.url?.split('/').pop() || c.id;
 
-// ---------------------------------------------------------------- GitHub
+// ---------------------------------------------------------------- Supabase
 
-async function gh(path, opts = {}) {
-  const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}${path}`, {
-    cache: 'no-store',
-    ...opts,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      Authorization: `Bearer ${cfg.token}`,
-      ...(opts.body && { 'Content-Type': 'application/json' }),
-    },
-  });
-  const body = await res.json().catch(() => null);
-  if (!res.ok) { const e = new Error(body?.message || res.statusText); e.status = res.status; throw e; }
-  return body;
-}
-const FILE = '/contents/data/whitelist.json';
-
-async function loadRemote() {
-  const f = await gh(FILE);
-  return { wl: normalize(JSON.parse(b64dec(f.content))), sha: f.sha };
-}
-
-// The build job writes resolved channel IDs / titles back into whitelist.json.
-// If that happened while we were editing, copy those fields into our version.
-function mergeResolved(local, remote) {
-  for (const c of local.channels) {
-    const r = remote.channels.find((x) => sameChannel(x, c));
-    if (r) { c.id ??= r.id; c.title ??= r.title; }
+export async function must(query) { const { data, error } = await query; if (error) throw error; return data; }
+/** Every row of a query (Supabase returns at most 1000 at a time). */
+export async function allRows(make) {
+  const out = [];
+  for (let from = 0; ; from += 1000) {
+    const rows = await must(make().range(from, from + 999));
+    out.push(...rows);
+    if (rows.length < 1000) return out;
   }
-  for (const p of local.playlists) {
-    const r = remote.playlists.find((x) => x.id === p.id);
-    if (r && !p.title) p.title = r.title;
-  }
+}
+const chunk = (arr, n) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
+const uid = () => state.user.id;
+const current = () => state.wigwams.find((w) => w.id === state.wigwam);
+
+/** The wigwam's rows → the working copy this page edits. */
+async function loadDoc(w) {
+  const [row, kids, sources, hidden, hearts] = await Promise.all([
+    must(sb.from('wigwams').select('*').eq('id', w).single()),
+    must(sb.from('kids').select('*').eq('wigwam_id', w).order('position')),
+    allRows(() => sb.from('sources').select('*').eq('wigwam_id', w).order('position').order('created_at')),
+    allRows(() => sb.from('hidden').select('video_id, title').eq('wigwam_id', w)),
+    allRows(() => sb.from('hearts').select('video_id').eq('wigwam_id', w)),
+  ]);
+  const entry = (s) => {
+    const e = { _id: s.id };
+    if (s.yt_id) e.id = s.yt_id;
+    for (const k of ['handle', 'username', 'url', 'title']) if (s[k]) e[k] = s[k];
+    e.profiles = s.kids || [];
+    if (typeof s.shorts === 'boolean') e.shorts = s.shorts;
+    return e;
+  };
+  for (const h of hidden) if (h.title) state.titles.set(h.video_id, h.title);
+  return {
+    row,
+    wl: normalize({
+      profiles: kids.map(({ id, name, emoji, color }) => ({ id, name, emoji, color })),
+      channels: sources.filter((s) => s.kind === 'channel').map(entry),
+      playlists: sources.filter((s) => s.kind === 'playlist').map(entry),
+      videos: sources.filter((s) => s.kind === 'video').map(entry),
+      blocked: hidden.map((h) => h.video_id),
+      hearts: hearts.map((h) => h.video_id),
+      settings: row.settings || {},
+    }),
+  };
 }
 
 async function loadCatalog() {
   try {
-    const res = await fetch(`data/catalog.json?t=${Date.now()}`, { cache: 'no-store' });
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/authenticated/feeds/${state.wigwam}/admin/catalog.json`, {
+      cache: 'no-store', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${session.access_token}` },
+    });
     state.catalog = res.ok ? await res.json() : null;
   } catch { state.catalog = null; }
 }
 
-// ---------------------------------------------------------------- connect / load
+export async function loadWigwam(id) {
+  const { row, wl } = await loadDoc(id);
+  state.wigwam = id;
+  localStorage.setItem(LS + 'wigwam', id);
+  Object.assign(current(), row);
+  state.wl = wl;
+  state.original = serialize(wl);
+  state.log = []; state.filter = 'all'; state.editingKid = null; state.browse = null;
+  state.addKids = new Set(JSON.parse(localStorage.getItem(LS + 'addKids:' + id) || 'null') || wl.profiles.map((p) => p.id));
+  await loadCatalog();
+}
+
+async function loadWigwams() {
+  state.wigwams = (await must(sb.from('members').select('role, wigwams(id, name, share_with_friends, built_at)').eq('user_id', uid())))
+    .filter((m) => m.wigwams).map((m) => ({ ...m.wigwams, role: m.role }));
+}
+
+// ---------------------------------------------------------------- sign in / choose a wigwam
+
+function show(which, html = '') {
+  for (const id of ['loading', 'gate', 'main']) el(id).hidden = id !== which;
+  if (which === 'gate') el('gate').innerHTML = html;
+  renderAccount();
+}
+
+function renderAccount() {
+  const signedIn = !!state.user;
+  el('account').hidden = !signedIn;
+  if (!signedIn) return;
+  const w = current();
+  el('account').innerHTML = `
+    ${state.wigwams.length ? `<label class="switcher" title="Which wigwam you're editing">🛖
+      <select id="wigwam-pick">${state.wigwams.map((x) => `<option value="${esc(x.id)}" ${x.id === state.wigwam ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}
+        <option value="+">＋ New wigwam…</option></select></label>` : ''}
+    ${w ? '<button type="button" class="btn small" id="wigwam-rename">Rename</button>' : ''}
+    <button type="button" class="btn small" id="sign-out" title="${esc(state.user.email || '')}">Sign out</button>`;
+}
+
+el('account').addEventListener('change', async (e) => {
+  if (e.target.id !== 'wigwam-pick') return;
+  const v = e.target.value;
+  if (dirty() && !confirm('You have unpublished changes. Switch anyway and lose them?')) { e.target.value = state.wigwam; return; }
+  if (v === '+') return showCreate(true);
+  show('loading');
+  try { await loadWigwam(v); show('main'); renderAll(); refreshSocial(); } catch (err) { showProblem(err); }
+});
+el('account').addEventListener('click', async (e) => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.id === 'sign-out') {
+    if (dirty() && !confirm('You have unpublished changes. Sign out anyway?')) return;
+    await sb.auth.signOut(); location.reload();
+  }
+  if (t.id === 'wigwam-rename') {
+    const name = prompt('Name this wigwam (friends see this name if you share with them)', current().name)?.trim();
+    if (!name) return;
+    try {
+      await must(sb.from('wigwams').update({ name }).eq('id', state.wigwam));
+      current().name = name; renderAccount(); renderStatus();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+});
+
+function showSignIn() {
+  show('gate', `
+    <h2>Sign in</h2>
+    <p class="muted">Wigwam keeps each family's lists private. Sign in with Google to see and change yours. Do this on <b>your</b> phone or computer, not the kids' device.</p>
+    <div class="row-actions"><button type="button" class="btn primary" id="google-btn">Sign in with Google</button></div>`);
+  el('google-btn').onclick = async () => {
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: 'select_account' } } });
+    if (error) toast(error.message, 'error');
+  };
+}
+
+async function showInvite(token) {
+  sessionStorage.removeItem('wigwam-invite');
+  history.replaceState(null, '', location.pathname);
+  const info = await must(sb.rpc('invite_info', { invite_token: token }));
+  const go = () => location.reload();
+  if (!info) { toast('That invite link has already been used or cancelled.', 'error'); return connect(); }
+  show('gate', `
+    <h2>${info.kind === 'member' ? `Join “${esc(info.wigwam)}”` : 'Be friends'}</h2>
+    <p>${info.kind === 'member'
+      ? `<b>${esc(info.from)}</b> invited you to help run their wigwam. You'll be able to see and change what the kids can watch, and add devices.`
+      : `<b>${esc(info.from)}</b> wants to be friends on Wigwam. Friends can look at each other's approved channels and playlists, but only for wigwams that choose to share. Nothing about your kids is shared.`}</p>
+    ${info.expired ? '<p class="warn">This link has expired. Ask for a new one.</p>' : ''}
+    <div class="row-actions">
+      ${info.expired || info.mine ? '' : `<button type="button" class="btn primary" id="accept">${info.kind === 'member' ? 'Join' : 'Accept'}</button>`}
+      <button type="button" class="btn" id="decline">${info.mine ? 'OK' : 'Not now'}</button>
+    </div>${info.mine ? '<p class="muted">This is your own invite link. Send it to the other grown-up.</p>' : ''}`);
+  el('decline').onclick = go;
+  el('accept')?.addEventListener('click', async () => {
+    try {
+      const r = await must(sb.rpc('accept_invite', { invite_token: token }));
+      if (r.wigwam_id) localStorage.setItem(LS + 'wigwam', r.wigwam_id);
+      toast(r.kind === 'member' ? 'Welcome in!' : 'You\'re friends now.');
+      setTimeout(go, 800);
+    } catch (err) { toast(err.message, 'error'); }
+  });
+}
+
+async function oldList() {
+  try { const r = await fetch('data/whitelist.json', { cache: 'no-store' }); return r.ok ? normalize(await r.json()) : null; } catch { return null; }
+}
+
+async function showCreate(another = false) {
+  const old = another ? null : await oldList();
+  show('gate', `
+    <h2>${another ? 'A new wigwam' : 'Make your wigwam'}</h2>
+    <p class="muted">A wigwam holds your kids and what they can watch. You can invite another grown-up to share it later.</p>
+    <label>Name <input id="new-name" value="${another ? '' : 'Our wigwam'}" maxlength="40" autocomplete="off"></label>
+    ${old ? `<label class="check"><input type="checkbox" id="bring-old" checked> Bring in the list from the old Wigwam:
+      ${old.profiles.length} kids, ${old.channels.length} channels, ${old.playlists.length} playlists, ${old.videos.length} videos, ${old.blocked.length} hidden</label>` : ''}
+    <div class="row-actions"><button type="button" class="btn primary" id="create-go">Create</button>
+      ${another ? '<button type="button" class="btn" id="create-cancel">Cancel</button>' : ''}</div>`);
+  el('create-cancel')?.addEventListener('click', () => { show('main'); renderAll(); });
+  el('create-go').onclick = async (e) => {
+    e.target.disabled = true;
+    try {
+      const id = await must(sb.rpc('create_wigwam', { wigwam_name: el('new-name').value }));
+      if (old && el('bring-old')?.checked) await importOld(id, old);
+      localStorage.setItem(LS + 'wigwam', id);
+      requestBuild().catch(() => {});
+      location.reload();
+    } catch (err) { e.target.disabled = false; toast(err.message, 'error'); }
+  };
+}
+
+/** Copies the old one-family whitelist.json into a new wigwam. */
+async function importOld(w, old) {
+  await must(sb.from('kids').insert(old.profiles.map((k, i) => ({ wigwam_id: w, id: k.id, name: k.name, emoji: k.emoji, color: k.color, position: i }))));
+  const rows = [];
+  const add = (kind, list) => list.forEach((e, i) => rows.push({
+    wigwam_id: w, kind, yt_id: e.id || null, handle: e.handle || null, username: e.username || null, url: e.url || null, title: e.title || null,
+    kids: e.profiles || [], shorts: kind === 'channel' && typeof e.shorts === 'boolean' ? e.shorts : null, position: i, added_by: uid(),
+  }));
+  add('channel', old.channels); add('playlist', old.playlists); add('video', old.videos);
+  for (const batch of chunk(rows, 500)) await must(sb.from('sources').insert(batch));
+  for (const batch of chunk([...new Set(old.blocked)], 500)) await must(sb.from('hidden').insert(batch.map((video_id) => ({ wigwam_id: w, video_id }))));
+  await must(sb.from('wigwams').update({ settings: old.settings }).eq('id', w));
+  await must(sb.from('activity').insert({ wigwam_id: w, user_id: uid(), message: 'brought in the list from the old Wigwam' }));
+}
+
+function showProblem(err) {
+  show('gate', `<h2>Something went wrong</h2><p class="warn">${esc(err.message || err)}</p>
+    <div class="row-actions"><button type="button" class="btn primary" onclick="location.reload()">Try again</button></div>`);
+}
 
 async function connect() {
-  el('setup').hidden = true;
-  el('main').hidden = true;
-  el('loading').hidden = false;
+  show('loading');
+  let youtubeCode = null;
   try {
-    await loadCatalog();
-    if (cfg.token && cfg.owner && cfg.repo) {
-      const { wl, sha } = await loadRemote();
-      state.mode = 'github'; state.wl = wl; state.sha = sha;
-    } else if (isLocalhost) {
-      const res = await fetch(`data/whitelist.json?t=${Date.now()}`, { cache: 'no-store' });
-      state.mode = 'local'; state.wl = normalize(await res.json());
-    } else {
-      throw Object.assign(new Error('not connected'), { setup: true });
+    // Back from Google: either signing in (Supabase) or connecting YouTube (ours).
+    const q = new URLSearchParams(location.search);
+    if (q.get('code') || q.get('error')) {
+      history.replaceState(null, '', location.pathname + location.hash);
+      if (q.get('error')) toast(`Google said: ${q.get('error_description') || q.get('error')}`, 'error');
+      else if (q.get('state') && q.get('state') === sessionStorage.getItem('wigwam-yt-state')) youtubeCode = q.get('code');
+      else { const { error } = await sb.auth.exchangeCodeForSession(q.get('code')); if (error) toast(`Couldn't sign in: ${error.message}`, 'error'); }
+      sessionStorage.removeItem('wigwam-yt-state');
     }
-    state.original = serialize(state.wl);
-    state.log = [];
-    state.addKids ??= new Set(JSON.parse(localStorage.getItem(LS + 'addKids') || 'null') || state.wl.profiles.map((p) => p.id));
-    el('loading').hidden = true;
-    el('main').hidden = false;
+    const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
+    if (invite) sessionStorage.setItem('wigwam-invite', invite);
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session || session.user.is_anonymous) return showSignIn();
+    state.user = session.user;
+    if (sessionStorage.getItem('wigwam-invite')) return await showInvite(sessionStorage.getItem('wigwam-invite'));
+
+    await loadWigwams();
+    if (!state.wigwams.length) return await showCreate();
+    const saved = localStorage.getItem(LS + 'wigwam');
+    await loadWigwam(state.wigwams.some((w) => w.id === saved) ? saved : state.wigwams[0].id);
+    show('main');
     renderAll();
+    await refreshSocial();
+    if (youtubeCode) finishYouTubeConnect(youtubeCode);
     const add = new URLSearchParams(location.hash.slice(1)).get('add'); // from the bookmarklet
     if (add) { el('add-input').value = add; history.replaceState(null, '', location.pathname); onAddInput(); }
   } catch (e) {
-    el('loading').hidden = true;
-    showSetup(e.setup ? '' : e.status === 401 ? 'GitHub didn\'t accept that token. Check it hasn\'t expired.'
-      : e.status === 404 ? `Couldn't find data/whitelist.json in ${cfg.owner}/${cfg.repo}. Check the repository name and that the token can access it.`
-        : `Couldn't connect: ${e.message}`);
+    showProblem(e);
   }
 }
-
-function showSetup(error = '') {
-  el('setup').hidden = false;
-  el('main').hidden = true;
-  el('cfg-owner').value = cfg.owner;
-  el('cfg-repo').value = cfg.repo;
-  el('cfg-token').value = cfg.token;
-  el('setup-error').textContent = error;
-  el('setup-error').hidden = !error;
-  el('local-btn').hidden = !isLocalhost;
-}
-
-el('setup-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  cfg.owner = el('cfg-owner').value.trim();
-  cfg.repo = el('cfg-repo').value.trim();
-  cfg.token = el('cfg-token').value.trim();
-  for (const k of ['owner', 'repo', 'token']) localStorage.setItem(LS + k, cfg[k]);
-  connect();
-});
-el('local-btn').addEventListener('click', () => { cfg.token = ''; localStorage.removeItem(LS + 'token'); connect(); });
-el('disconnect').addEventListener('click', () => {
-  if (dirty() && !confirm('You have unpublished changes. Disconnect anyway?')) return;
-  localStorage.removeItem(LS + 'token'); cfg.token = '';
-  showSetup();
-});
 
 // ---------------------------------------------------------------- rendering
 
@@ -258,27 +393,24 @@ function renderAll() {
   renderPreview();
   renderLists();
   renderBrowser();
+  renderSocial();
   renderPublishBar();
 }
 
 function renderStatus() {
-  const c = state.catalog;
-  const where = state.mode === 'github' ? `${esc(cfg.owner)}/${esc(cfg.repo)}` : 'local copy (not connected to GitHub)';
-  let html = `<span class="muted">Editing ${where}</span>`;
-  if (c) {
-    const n = Object.keys(c.videos || {}).length;
-    html += ` · <span>Kids' app updated <b>${esc(timeAgo(c.generatedAt))}</b> · ${n} videos</span>`;
-  }
+  const c = state.catalog, w = current();
+  let html = `<span class="muted">Editing <b>${esc(w?.name || '')}</b></span>`;
+  if (w?.built_at) html += ` · <span>Kids' app updated <b>${esc(timeAgo(w.built_at))}</b>${c ? ` · ${Object.keys(c.videos || {}).length} videos` : ''}</span>`;
+  else html += ' · <span>Kids\' app: <b>not built yet</b> (publish something, or wait a minute)</span>';
   el('status').innerHTML = html;
-  el('disconnect').hidden = state.mode !== 'github';
 
   const notes = [];
-  if (c?.mode === 'rss') notes.push(`<b>Free mode:</b> without a YouTube API key, Wigwam only sees each channel's newest ~15 videos, though the list grows over time. Add a key to get every video (see the README).`);
-  if (c?.warnings?.length) notes.push(`<b>Last update had ${c.warnings.length} problem${c.warnings.length > 1 ? 's' : ''}:</b><ul>${c.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`);
+  if (c?.mode === 'rss') notes.push(`<b>Free mode:</b> without a YouTube API key, Wigwam only sees each channel's newest ~15 videos, though the list grows over time.`);
+  if (c?.warnings?.length) notes.push(`<b>Last update had ${c.warnings.length} problem${c.warnings.length > 1 ? 's' : ''}:</b><ul>${c.warnings.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`);
   el('notes').innerHTML = notes.map((n) => `<div class="note">${n}</div>`).join('');
 }
 
-function kidChip(p, on, attrs = '') {
+export function kidChip(p, on, attrs = '') {
   return `<button type="button" class="kid ${on ? 'on' : ''}" style="--c:${esc(p.color)}" ${attrs} aria-pressed="${on}" title="${esc(p.name)}"><span class="ke">${esc(p.emoji)}</span><span class="kn">${esc(p.name)}</span></button>`;
 }
 
@@ -442,7 +574,7 @@ el('add-kids').addEventListener('click', (e) => {
   const id = e.target.closest('[data-add-kid]')?.dataset.addKid;
   if (!id) return;
   state.addKids.has(id) ? state.addKids.delete(id) : state.addKids.add(id);
-  localStorage.setItem(LS + 'addKids', JSON.stringify([...state.addKids]));
+  localStorage.setItem(LS + 'addKids:' + state.wigwam, JSON.stringify([...state.addKids]));
   renderAddKids(); renderPreview();
 });
 
@@ -544,7 +676,7 @@ el('preview').addEventListener('click', (e) => {
   const choice = e.target.closest('[data-choice]');
   if (choice) { pv.selected = +choice.dataset.choice; return renderPreview(); }
   const kid = e.target.closest('[data-add-kid]')?.dataset.addKid;
-  if (kid) { state.addKids.has(kid) ? state.addKids.delete(kid) : state.addKids.add(kid); localStorage.setItem(LS + 'addKids', JSON.stringify([...state.addKids])); renderAddKids(); return renderPreview(); }
+  if (kid) { state.addKids.has(kid) ? state.addKids.delete(kid) : state.addKids.add(kid); localStorage.setItem(LS + 'addKids:' + state.wigwam, JSON.stringify([...state.addKids])); renderAddKids(); return renderPreview(); }
   if (e.target.closest('#add-cancel')) return clearAdd();
   if (e.target.closest('#add-go')) approve(pv.options[pv.selected]);
 });
@@ -606,9 +738,15 @@ function miniCard(id) {
 }
 
 function videoAction(t) {
-  const id = t.dataset.hide || t.dataset.allow;
+  const id = t.dataset.hide || t.dataset.allow || t.dataset.heart;
   if (!id) return;
-  const title = state.catalog?.videos?.[id]?.title || state.titles.get(id) || id;
+  const title = state.catalog?.videos?.[id]?.title || state.titles.get(id) || state.wl.videos.find((v) => v.id === id)?.title || id;
+  if (t.dataset.heart) {
+    const h = state.wl.hearts;
+    if (h.includes(id)) { state.wl.hearts = h.filter((x) => x !== id); return change(`unheart ${title}`); }
+    h.push(id);
+    return change(`heart ${title}`);
+  }
   if (t.dataset.allow) {
     const s = state.wl.settings;
     if (s.allowAnyway.includes(id)) { s.allowAnyway = s.allowAnyway.filter((x) => x !== id); change(`stop allowing ${title}`); }
@@ -687,7 +825,7 @@ function renderLists() {
         <div class="muted">${esc(state.catalog?.videos?.[v.id]?.channelTitle || '')}${(v.profiles || []).length ? '' : ' · <b class="warn">no kids selected</b>'}</div>
       </div>
       <div class="item-kids">${entryKids('videos', i, v)}</div>
-      <div class="item-btns"><button type="button" class="btn small danger" data-remove="videos:${i}" aria-label="Remove">✕</button></div>
+      <div class="item-btns">${heartBtn(v.id)}<button type="button" class="btn small danger" data-remove="videos:${i}" aria-label="Remove">✕</button></div>
     </div></div>`).join('') : `<p class="muted empty">No single videos${state.filter === 'all' ? ' yet' : ' for this kid'}.</p>`;
 
   el('hidden-wrap').hidden = !wl.blocked.length;
@@ -778,6 +916,11 @@ function browsed() {
 
 const matching = (ids, q) => (q ? ids.filter((id) => fold(state.catalog.videos[id]?.title).includes(q)) : ids);
 
+const heartBtn = (id) => {
+  const on = state.wl.hearts.includes(id);
+  return `<button type="button" class="heartbtn ${on ? 'on' : ''}" data-heart="${esc(id)}" aria-pressed="${on}" title="${on ? 'Loved by the grown-ups: shows near the top of “♥ Top”' : 'Love this (it shows near the top of “♥ Top” in the kids\' app)'}">${on ? '♥' : '♡'}</button>`;
+};
+
 function browserCard(id) {
   const v = state.catalog?.videos?.[id];
   const reason = hiddenReason(id);
@@ -794,7 +937,7 @@ function browserCard(id) {
       <div class="mini-title">${esc(v?.title || id)}</div>
       <div class="mini-foot">
         <span class="muted">${note}</span>
-        <a class="link" href="https://www.youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener" title="Watch on YouTube">Watch ↗</a>
+        <span class="foot-btns">${heartBtn(id)}<a class="link" href="https://www.youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener" title="Watch on YouTube">Watch ↗</a></span>
       </div>
     </div>`;
 }
@@ -820,9 +963,10 @@ function renderBrowser() {
 
   const q = fold(b.q.trim());
   const matches = matching(info.ids, q);
-  const byTab = { all: matches, shown: matches.filter((id) => !hiddenReason(id)), hidden: matches.filter(hiddenReason) };
+  const hearts = new Set(state.wl.hearts);
+  const byTab = { all: matches, shown: matches.filter((id) => !hiddenReason(id)), hidden: matches.filter(hiddenReason), loved: matches.filter((id) => hearts.has(id)) };
   const list = byTab[b.tab];
-  el('br-tabs').innerHTML = [['all', 'All'], ['shown', 'Showing'], ['hidden', 'Hidden']]
+  el('br-tabs').innerHTML = [['all', 'All'], ['shown', 'Showing'], ['hidden', 'Hidden'], ['loved', '♥ Loved']]
     .map(([k, name]) => `<button type="button" class="tab ${b.tab === k ? 'on' : ''}" data-tab="${k}">${name} <span class="n">${byTab[k].length}</span></button>`).join('');
 
   // After a search, hide or unhide everything that matched in one go.
@@ -837,7 +981,7 @@ function renderBrowser() {
   b.page = Math.min(b.page, pages - 1);
   el('br-grid').innerHTML = list.length
     ? list.slice(b.page * PAGE, (b.page + 1) * PAGE).map(browserCard).join('')
-    : `<p class="muted empty">${b.tab === 'hidden' ? 'Nothing hidden here.' : 'No videos match.'}</p>`;
+    : `<p class="muted empty">${b.tab === 'hidden' ? 'Nothing hidden here.' : b.tab === 'loved' ? 'Tap ♡ under a video to love it. Loved videos come first in the kids\' “♥ Top” sort.' : 'No videos match.'}</p>`;
   el('br-pager').innerHTML = pages > 1 ? `
     <button type="button" class="btn small" data-page="${b.page - 1}" ${b.page ? '' : 'disabled'}>◀ Newer</button>
     <span class="muted">Page ${b.page + 1} of ${pages}</span>
@@ -972,7 +1116,6 @@ function renderPublishBar() {
   if (bar.dataset.busy === '1') return;
   const n = state.log.length || 1;
   el('publish-msg').textContent = `${n} unpublished change${n > 1 ? 's' : ''}`;
-  el('publish').textContent = state.mode === 'github' ? 'Publish' : 'Download whitelist.json';
 }
 
 el('discard').addEventListener('click', () => {
@@ -983,35 +1126,86 @@ el('discard').addEventListener('click', () => {
 
 window.addEventListener('beforeunload', (e) => { if (dirty()) { e.preventDefault(); e.returnValue = ''; } });
 
-el('publish').addEventListener('click', async () => {
-  const json = serialize(state.wl);
-  if (state.mode === 'local') {
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([json], { type: 'application/json' })), download: 'whitelist.json' });
-    a.click(); URL.revokeObjectURL(a.href);
-    toast('Downloaded. Put it in the data folder and run the build script.');
-    return;
+/** Writes the difference between the last published version and the working copy. Only
+ *  what changed is sent, so a co-parent's changes made meanwhile are kept. */
+async function saveChanges() {
+  const w = state.wigwam, before = normalize(JSON.parse(state.original)), after = state.wl;
+
+  const kidRow = (k, i) => ({ wigwam_id: w, id: k.id, name: k.name, emoji: k.emoji, color: k.color, position: i });
+  const oldKids = new Map(before.profiles.map((k, i) => [k.id, JSON.stringify(kidRow(k, i))]));
+  const kidUpserts = after.profiles.map(kidRow).filter((r) => oldKids.get(r.id) !== JSON.stringify(r));
+  if (kidUpserts.length) await must(sb.from('kids').upsert(kidUpserts));
+
+  for (const [list, kind] of [['channels', 'channel'], ['playlists', 'playlist'], ['videos', 'video']]) {
+    const old = new Map(before[list].map((e, i) => [e._id, { e, i }]));
+    const fields = (e, i) => ({ kids: e.profiles || [], shorts: kind === 'channel' && typeof e.shorts === 'boolean' ? e.shorts : null, position: i });
+    const inserts = [], updates = [];
+    after[list].forEach((e, i) => {
+      if (!e._id) {
+        inserts.push({ wigwam_id: w, kind, yt_id: e.id || null, handle: e.handle || null, username: e.username || null, url: e.url || null, title: e.title || null, added_by: uid(), ...fields(e, i) });
+      } else {
+        const o = old.get(e._id);
+        if (o && JSON.stringify(fields(o.e, o.i)) !== JSON.stringify(fields(e, i))) updates.push([e._id, fields(e, i)]);
+      }
+    });
+    const gone = [...old.keys()].filter((id) => !after[list].some((e) => e._id === id));
+    for (const batch of chunk(inserts, 500)) await must(sb.from('sources').insert(batch));
+    for (const batch of chunk(updates, 10)) await Promise.all(batch.map(([id, f]) => must(sb.from('sources').update(f).eq('id', id))));
+    for (const batch of chunk(gone, 100)) await must(sb.from('sources').delete().in('id', batch));
   }
+
+  const goneKids = [...oldKids.keys()].filter((id) => !after.profiles.some((k) => k.id === id));
+  if (goneKids.length) await must(sb.from('kids').delete().eq('wigwam_id', w).in('id', goneKids));
+
+  for (const [table, key] of [['hidden', 'blocked'], ['hearts', 'hearts']]) {
+    const b = new Set(before[key]), a = new Set(after[key]);
+    const added = [...a].filter((id) => !b.has(id)), removed = [...b].filter((id) => !a.has(id));
+    for (const batch of chunk(added, 500)) {
+      await must(sb.from(table).upsert(batch.map((video_id) => ({ wigwam_id: w, video_id, ...(table === 'hidden' && { title: state.titles.get(video_id) || state.catalog?.videos?.[video_id]?.title || null }) })), { ignoreDuplicates: true }));
+    }
+    for (const batch of chunk(removed, 100)) await must(sb.from(table).delete().eq('wigwam_id', w).in('video_id', batch));
+  }
+
+  if (JSON.stringify(before.settings) !== JSON.stringify(after.settings)) {
+    const remote = (await must(sb.from('wigwams').select('settings').eq('id', w).single())).settings || {};
+    const merge = (key) => {
+      const b = new Set(before.settings[key]), a = new Set(after.settings[key]), r = new Set(remote[key] || []);
+      for (const x of a) if (!b.has(x)) r.add(x);
+      for (const x of b) if (!a.has(x)) r.delete(x);
+      return [...r];
+    };
+    const allowShorts = after.settings.allowShorts !== before.settings.allowShorts ? after.settings.allowShorts : remote.allowShorts ?? after.settings.allowShorts;
+    await must(sb.from('wigwams').update({ settings: { ...remote, allowShorts, blockedTerms: merge('blockedTerms'), allowAnyway: merge('allowAnyway') } }).eq('id', w));
+  }
+
+  const msgs = state.log.length ? state.log : ['changed the lists'];
+  const rows = (msgs.length > 40 ? [...msgs.slice(0, 39), `…and ${msgs.length - 39} more changes`] : msgs).map((message) => ({ wigwam_id: w, user_id: uid(), message }));
+  await must(sb.from('activity').insert(rows));
+}
+
+async function requestBuild() {
+  const { error } = await sb.functions.invoke('request-build');
+  if (error) {
+    let msg = error.message;
+    try { msg = (await error.context.json()).error || msg; } catch {}
+    throw new Error(msg);
+  }
+}
+
+el('publish').addEventListener('click', async () => {
   const bar = el('publish-bar');
   bar.dataset.busy = '1';
   el('publish').disabled = true; el('discard').disabled = true;
   el('publish-msg').textContent = 'Publishing…';
-  const summary = state.log.length ? state.log.slice(0, 4).join('; ') + (state.log.length > 4 ? ` (+${state.log.length - 4} more)` : '') : 'update whitelist';
-  const put = () => gh(FILE, { method: 'PUT', body: JSON.stringify({ message: `Admin: ${summary}`, content: b64enc(serialize(state.wl)), sha: state.sha }) });
   const startedAt = new Date();
   try {
-    let res;
-    try { res = await put(); }
-    catch (e) {
-      if (e.status !== 409 && e.status !== 422) throw e;
-      const remote = await loadRemote(); // someone (usually the nightly build) changed it meanwhile
-      mergeResolved(state.wl, remote.wl);
-      state.sha = remote.sha;
-      res = await put();
-    }
-    state.sha = res.content.sha;
-    state.original = serialize(state.wl);
-    state.log = [];
-    watchBuild(startedAt);
+    await saveChanges();
+    let building = true;
+    try { await requestBuild(); } catch (e) { building = false; toast(`Saved. The kids' app updates tonight (couldn't start an update now: ${e.message})`); }
+    await loadWigwam(state.wigwam);
+    renderAll(); loadActivity().then(renderSocial).catch(() => {});
+    if (building) watchBuild(startedAt);
+    else { bar.dataset.busy = '0'; renderPublishBar(); }
   } catch (e) {
     bar.dataset.busy = '0';
     toast(`Couldn't publish: ${e.message}`, 'error');
@@ -1021,43 +1215,31 @@ el('publish').addEventListener('click', async () => {
   }
 });
 
-// After publishing, the GitHub Action rebuilds the catalog and redeploys the
-// site. Follow it via the Actions API if the token allows, else by watching
-// catalog.json on the live site.
+// After publishing, the builder (a GitHub Action) updates the kids' files. Watch the
+// wigwam's built_at until it moves past the moment we published.
 async function watchBuild(since) {
   const bar = el('publish-bar');
-  const msg = el('publish-msg');
   el('publish').hidden = true; el('discard').hidden = true;
-  msg.innerHTML = '<span class="dot"></span> Saved. Updating the kids\' app (about a minute)…';
-  const deadline = Date.now() + 6 * 60 * 1000;
-  let useActions = true;
+  el('publish-msg').innerHTML = '<span class="dot"></span> Saved. Updating the kids\' app (about a minute)…';
   const done = (text, kind = '') => {
     bar.dataset.busy = '0';
     el('publish').hidden = false; el('discard').hidden = false;
     toast(text, kind);
     renderPublishBar();
   };
+  const deadline = Date.now() + 6 * 60 * 1000;
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, 8000));
-    if (useActions) {
-      try {
-        const runs = await gh('/actions/runs?per_page=5&branch=main');
-        const run = runs.workflow_runs.find((r) => new Date(r.created_at) >= new Date(since.getTime() - 5000));
-        if (run?.status === 'completed') {
-          await loadCatalog(); renderAll();
-          return run.conclusion === 'success' ? done('✓ The kids\' app is up to date.') : done(`The update failed. Check GitHub → Actions (${run.html_url}).`, 'error');
-        }
-        continue;
-      } catch { useActions = false; }
-    }
-    const before = state.catalog?.generatedAt;
-    await loadCatalog();
-    if (state.catalog?.generatedAt && state.catalog.generatedAt !== before && new Date(state.catalog.generatedAt) > since) {
-      renderAll();
-      return done('✓ The kids\' app is up to date.');
-    }
+    try {
+      const { built_at } = await must(sb.from('wigwams').select('built_at').eq('id', state.wigwam).single());
+      if (built_at && new Date(built_at) > since) {
+        current().built_at = built_at;
+        await loadCatalog(); renderAll();
+        return done('✓ The kids\' app is up to date.');
+      }
+    } catch { /* keep waiting */ }
   }
-  done('Saved. The kids\' app hasn\'t updated yet. Check GitHub → Actions if it doesn\'t appear soon.');
+  done('Saved. The kids\' app hasn\'t updated yet; it will by tonight at the latest.');
 }
 
 // ---------------------------------------------------------------- bookmarklet

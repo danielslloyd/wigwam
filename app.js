@@ -1,15 +1,18 @@
 // Kid-facing app: pick a profile → pick a channel / collection → pick a video.
-// Everything shown comes from data/kids/<kid>.json (written by the build from the
-// whitelist), so only approved videos exist here.
+// Everything shown comes from the wigwam's private kid files (written by the build from
+// what the grown-ups approved), so only approved videos exist here. A new device first
+// shows a code for a grown-up to pair it. What the kids watch and heart stays here.
 
-import { loadKidsIndex, loadKid, thumbUrl, fmtDuration, esc } from './shared.js';
+import { thumbUrl, fmtDuration, esc } from './shared.js';
+import { ensureSignedIn, pairedWigwam, newPairCode, loadIndex, loadKid, forgetFeeds } from './device.js';
 import { initSpatialNav } from './nav.js';
 import { mountPlayer } from './player.js';
 
 const PAGE_SIZE = 24;
 const app = document.getElementById('app');
-let index = null;   // data/kids/index.json: the kids, and the current version of each kid's file
-let catalog = null; // the open kid's data/kids/<kid>.json
+let wigwam = null;  // the wigwam this device is paired with
+let index = null;   // the wigwam's index.json: the kids, and the current version of each kid's file
+let catalog = null; // the open kid's file
 let teardown = null;
 
 // ---------------------------------------------------------------- storage
@@ -21,6 +24,15 @@ const store = {
 };
 const watched = (pid) => new Set(store.get(`watched:${pid}`, []));
 function markWatched(pid, vid) { const w = watched(pid); w.add(vid); store.set(`watched:${pid}`, [...w]); }
+
+// Hearts: a kid's own hearts live only on this device; the grown-ups' hearts come in the kid file.
+const kidHearts = (pid) => new Set(store.get(`hearts:${pid}`, []));
+function setHeart(pid, vid, on) {
+  const h = kidHearts(pid);
+  if (on) h.add(vid); else h.delete(vid);
+  store.set(`hearts:${pid}`, [...h]);
+}
+const grownUpHearts = () => new Set(catalog?.hearts || []);
 
 // ---------------------------------------------------------------- data access
 
@@ -147,6 +159,9 @@ function renderGrid(p, key, query) {
   if (q) ids = ids.filter((id) => catalog.videos[id].title.toLowerCase().includes(q));
   if (sort === 'az') ids = [...ids].sort((a, b) => catalog.videos[a].title.localeCompare(catalog.videos[b].title));
   if (sort === 'old') ids = [...ids].reverse();
+  const mine = kidHearts(p.id), theirs = grownUpHearts();
+  const score = (id) => (mine.has(id) ? 2 : 0) + (theirs.has(id) ? 1 : 0);
+  if (sort === 'top') ids = ids.map((id, i) => [id, i]).sort((a, b) => score(b[0]) - score(a[0]) || a[1] - b[1]).map(([id]) => id);
 
   const pages = Math.max(1, Math.ceil(ids.length / PAGE_SIZE));
   const page = Math.min(pages, Math.max(1, parseInt(query.get('page') || '1', 10) || 1));
@@ -164,7 +179,7 @@ function renderGrid(p, key, query) {
   sessionStorage.setItem('tb:lastGrid', here);
 
   const sortLabel = s.kind === 'playlist' ? 'In order' : s.kind === 'mine' ? 'Newest picks' : 'Newest';
-  const sorts = [['default', sortLabel], ['old', s.kind === 'playlist' ? 'Reverse' : 'Oldest'], ['az', 'A–Z']];
+  const sorts = [['default', sortLabel], ['top', '♥ Top'], ['old', s.kind === 'playlist' ? 'Reverse' : 'Oldest'], ['az', 'A–Z']];
 
   app.innerHTML = `
     ${header(p, { back: `#/p/${enc(p.id)}`, title: s.title })}
@@ -184,6 +199,7 @@ function renderGrid(p, key, query) {
               <img src="${thumbUrl(id)}" alt="" loading="lazy">
               ${v.durationSec ? `<span class="dur">${fmtDuration(v.durationSec)}</span>` : ''}
               ${seen.has(id) ? '<span class="seen" aria-label="Watched">✓</span>' : ''}
+              ${score(id) ? `<span class="heart ${mine.has(id) ? 'mine' : ''}" aria-label="Loved">♥</span>` : ''}
             </span>
             <span class="ctitle">${esc(v.title)}</span>
           </a>`;
@@ -227,6 +243,8 @@ function renderPlayer(p, vid) {
     title: catalog.videos[vid]?.title || '',
     startAt: saved > 10 ? saved : 0,
     onBack: goBack,
+    hearted: kidHearts(p.id).has(vid),
+    onHeart(on) { setHeart(p.id, vid, on); },
     onProgress(t, d) {
       if (!d) return;
       if (t / d > 0.9) { markWatched(p.id, vid); store.del(posKey); }
@@ -240,7 +258,7 @@ function renderPlayer(p, vid) {
 async function openKid(pid) {
   app.innerHTML = '<section class="screen center"><div class="spinner"></div></section>';
   try {
-    catalog = await loadKid(pid, index.versions[pid]);
+    catalog = await loadKid(wigwam, pid, index.versions[pid]);
   } catch (e) {
     app.innerHTML = `<section class="screen center"><p class="empty">😕 ${esc(e.message)}</p><button class="cbtn primary" onclick="location.reload()">Try again</button></section>`;
     return;
@@ -259,25 +277,67 @@ async function refreshCatalog() {
   if (!index || Date.now() - lastLoad < 60_000) return;
   lastLoad = Date.now();
   try {
-    const fresh = await loadKidsIndex();
+    const fresh = await loadIndex(wigwam);
     const pid = catalog?.profiles[0].id;
     const kidChanged = !!pid && fresh.versions[pid] !== catalog.version;
     const kidsChanged = JSON.stringify(fresh.profiles) !== JSON.stringify(index.profiles);
     if (!kidChanged && !kidsChanged) return;
     index = fresh;
-    if (kidChanged) catalog = fresh.versions[pid] ? await loadKid(pid, fresh.versions[pid]) : null;
+    if (kidChanged) catalog = fresh.versions[pid] ? await loadKid(wigwam, pid, fresh.versions[pid]) : null;
     if (parseHash().parts[2] !== 'v') render();
-  } catch { /* offline: keep what we have */ }
+  } catch (e) {
+    // Offline: keep what we have. Refused: a grown-up may have removed this device.
+    if (e.status && !(await pairedWigwam().catch(() => wigwam))) { await forgetFeeds(); location.reload(); }
+  }
+}
+
+// ---------------------------------------------------------------- pairing
+
+/** Shows a code until a grown-up types it into the grown-ups' page. Resolves with the wigwam. */
+async function pair() {
+  const code = await newPairCode();
+  const admin = new URL('admin.html', location.href);
+  app.innerHTML = `
+    <section class="screen center pairing">
+      <div class="pair-icon">🛖</div>
+      <h1 class="hello">Ask a grown-up to set up Wigwam</h1>
+      <p class="pair-help">On a grown-up's phone or computer, open <b>${esc(admin.host + admin.pathname)}</b>,
+        go to <b>Devices</b>, press <b>Add a device</b> and type this code:</p>
+      <div class="pair-code" aria-label="Pairing code ${esc(code.split('').join(' '))}">${esc(code.slice(0, 3))}<span> </span>${esc(code.slice(3))}</div>
+    </section>`;
+  return new Promise((resolve) => {
+    const timer = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
+      const w = await pairedWigwam().catch(() => null);
+      if (w) { clearInterval(timer); resolve(w); }
+    }, 4000);
+  });
+}
+
+function problem(msg) {
+  app.innerHTML = `<section class="screen center"><p class="empty">😕 ${esc(msg)}</p><button class="cbtn primary" onclick="location.reload()">Try again</button></section>`;
 }
 
 // ---------------------------------------------------------------- boot
 
 (async function boot() {
   try {
-    index = await loadKidsIndex();
-  } catch (e) {
-    app.innerHTML = `<section class="screen center"><p class="empty">😕 ${esc(e.message)}</p><button class="cbtn primary" onclick="location.reload()">Try again</button></section>`;
-    return;
+    await ensureSignedIn();
+    wigwam = await pairedWigwam();
+  } catch {
+    // Offline: carry on with the lists saved last time, if there are any.
+    wigwam = JSON.parse(localStorage.getItem('wigwam-device:index') || 'null')?.wigwam;
+    if (!wigwam) return problem("Wigwam can't reach the internet.");
+  }
+  if (!wigwam) wigwam = await pair();
+  for (;;) {
+    try { index = await loadIndex(wigwam); break; } catch (e) {
+      if (e.status !== 400 && e.status !== 404) return problem(e.message);
+      // Paired, but the first build hasn't finished yet (or the device was removed).
+      app.innerHTML = '<section class="screen center pairing"><div class="spinner"></div><p class="pair-help">Getting the videos ready…</p></section>';
+      await new Promise((r) => setTimeout(r, 10_000));
+      if (!(await pairedWigwam().catch(() => wigwam))) { await forgetFeeds(); return location.reload(); }
+    }
   }
   initSpatialNav(app, { onBack: goBack });
   window.wigwamBack = goBack; // the Android app's Back button calls this

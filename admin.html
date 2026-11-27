@@ -101,7 +101,7 @@
     body.reordering, body.reordering * { cursor: grabbing !important; user-select: none; }
     .item.dragging { position: relative; z-index: 2; background: #fff7ec; border-radius: 14px; box-shadow: 0 8px 24px rgba(60,40,20,.18); border-top-color: transparent; }
     .item.dragging + .item { border-top-color: transparent; }
-    #hidden { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+    .strip, #hidden { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
     .mini img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; display: block; background: var(--bg); }
     .mini-title { font-size: .85rem; font-weight: 700; line-height: 1.2; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .mini-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 6px; font-size: .85rem; }
@@ -186,6 +186,47 @@
     .bm { display: inline-block; background: var(--accent); color: #fff; padding: 6px 14px; border-radius: 999px; text-decoration: none; font-weight: 800; cursor: grab; }
     details summary { cursor: pointer; font-weight: 700; }
 
+    /* account, gate */
+    #account { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .switcher { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-weight: 800; }
+    .switcher select { font: inherit; font-weight: 800; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: #fff; max-width: 220px; }
+    #gate h2 { margin-top: 0; }
+    .check { display: flex; gap: 8px; align-items: center; font-weight: 600; margin: 10px 0; }
+    .check input { width: auto; margin: 0; }
+
+    /* rows: devices, grown-ups, friends, YouTube accounts */
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--line); }
+    .row:first-child { border-top: 0; }
+    .row-icon { font-size: 1.6rem; width: 40px; text-align: center; }
+    .row-text { flex: 1; min-width: 160px; }
+    .face { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--bg); display: grid; place-items: center; font-weight: 800; color: var(--muted); flex: none; }
+    .row .check { margin: 0; font-size: .9rem; }
+    .small { font-size: .85rem; }
+    .btn.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, white); }
+    .invites { margin-top: 12px; }
+    .linkbox { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .linkbox input { font-size: .85rem; padding: 7px 10px; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 6px; }
+    .tabs .tab { box-shadow: none; background: var(--bg); }
+    .tabs .tab.on { background: var(--ink); color: #fff; }
+    .tab .n { opacity: .6; font-weight: 600; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-top: 10px; }
+    .tile { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+    .tile img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; background: var(--bg); display: block; }
+    .tile img.round { width: 72px; height: 72px; aspect-ratio: 1; border-radius: 50%; }
+    .tile-blank { width: 100%; aspect-ratio: 16/9; border-radius: 10px; background: var(--bg); display: grid; place-items: center; color: var(--muted); }
+    .tile-title { font-weight: 700; font-size: .9rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .tile-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+    #friend-view { margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--bg); }
+    .act { padding: 5px 0; border-top: 1px solid var(--line); font-size: .93rem; }
+    .act:first-child { border-top: 0; }
+    .more { margin-top: 12px; }
+
+    /* grown-ups' hearts */
+    .heartbtn { border: 0; background: none; cursor: pointer; color: #f43f5e; font-size: 1.15rem; padding: 0 6px; line-height: 1; }
+    .heartbtn.on { font-weight: 900; }
+    .foot-btns { display: inline-flex; align-items: center; gap: 2px; }
+
     @media (max-width: 640px) {
       .pthumb { width: 120px; }
       .item-kids { width: 100%; order: 3; }
@@ -198,34 +239,13 @@
   <div class="wrap">
     <header class="top">
       <h1>Wigwam <span>for grown-ups</span></h1>
-      <button type="button" class="btn small" id="disconnect" hidden>Disconnect</button>
+      <div id="account" hidden></div>
     </header>
 
     <div id="loading" class="muted">Loading…</div>
 
-    <!-- First-time setup -->
-    <section class="card" id="setup" hidden>
-      <h2>Connect to your Wigwam repository</h2>
-      <p class="muted">Wigwam saves your list to GitHub. This page needs a key that can change only that one repository. The key stays in this browser, so set this up on <b>your</b> phone or computer, not the kids' device.</p>
-      <ol>
-        <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener"><b>Create a fine-grained token on GitHub ↗</b></a></li>
-        <li>Under <b>Repository access</b>, choose <i>Only select repositories</i> and pick your Wigwam repo.</li>
-        <li>Under <b>Permissions → Repository permissions</b>, set <b>Contents</b> to <i>Read and write</i>. Optionally, set <b>Actions</b> to <i>Read-only</i> so this page can show build progress.</li>
-        <li>Generate the token, copy it, and paste it below.</li>
-      </ol>
-      <div id="setup-error" hidden></div>
-      <form id="setup-form">
-        <div style="display:flex; gap:10px; flex-wrap:wrap">
-          <label style="flex:1; min-width:180px">GitHub user <input id="cfg-owner" autocomplete="off" required></label>
-          <label style="flex:1; min-width:180px">Repository <input id="cfg-repo" autocomplete="off" required></label>
-        </div>
-        <label>Token <input id="cfg-token" type="password" autocomplete="off" placeholder="github_pat_…" required></label>
-        <div class="row-actions">
-          <button class="btn primary" type="submit">Connect</button>
-          <button class="btn" type="button" id="local-btn" hidden>Edit the local copy instead</button>
-        </div>
-      </form>
-    </section>
+    <!-- Sign in, make a wigwam, accept an invite -->
+    <section class="card" id="gate" hidden></section>
 
     <div id="main" hidden>
       <div id="status" class="muted"></div>
@@ -246,11 +266,37 @@
         </details>
       </section>
 
+      <!-- From the grown-up's own YouTube -->
+      <section class="card" id="youtube-card">
+        <h2>▶️ From your YouTube <span class="count" id="yt-count"></span></h2>
+        <p class="muted" style="margin-top:0">Connect your YouTube channel to pick from your subscriptions, playlists and liked videos. New ones turn up here every night. Nothing reaches the kids until you add it and publish.</p>
+        <div id="yt-accounts"></div>
+        <p class="muted" id="yt-note" hidden>Connecting YouTube isn't set up yet (it needs a Google sign-in client).</p>
+        <div class="row-actions"><button type="button" class="btn" id="yt-connect">Connect YouTube</button></div>
+        <div id="inbox-wrap" hidden>
+          <div class="tabs" id="inbox-tabs"></div>
+          <div class="who"><span class="muted">Add for:</span> <span id="inbox-kids" style="display:contents"></span></div>
+          <div id="inbox"></div>
+        </div>
+      </section>
+
       <!-- Kids -->
       <section class="card">
         <h2>👧 Kids</h2>
         <div id="kids"></div>
         <div id="kid-editor" hidden></div>
+      </section>
+
+      <!-- Devices -->
+      <section class="card" id="devices-card">
+        <h2>📱 Devices <span class="count" id="devices-count"></span></h2>
+        <p class="muted" style="margin-top:0">A new tablet or TV shows a 6-letter code when Wigwam opens. Type it here to give it this wigwam's kids.</p>
+        <div id="devices"></div>
+        <form id="pair-form" class="addrow" style="margin-top:12px">
+          <input id="pair-code" placeholder="Code" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" style="max-width:150px; text-transform:uppercase; letter-spacing:.1em">
+          <input id="pair-name" placeholder="Name, e.g. Kitchen tablet" maxlength="30" autocomplete="off">
+          <button class="btn primary" type="submit">Add a device</button>
+        </form>
       </section>
 
       <!-- Filters -->
@@ -290,6 +336,36 @@
         <section class="card" id="hidden-wrap" hidden><h2>🚫 Hidden videos <span class="count" id="count-hidden"></span></h2>
           <p class="muted" style="margin:0">These never show up, even when their channel is approved.</p><div id="hidden"></div></section>
       </div>
+
+      <!-- Friends -->
+      <section class="card" id="friends-card">
+        <h2>🤝 Friends <span class="count" id="friends-count"></span></h2>
+        <div class="setting">
+          <div>
+            <div class="setting-title">Share this wigwam with friends</div>
+            <div class="muted">Friends can see its approved channels and playlists, and copy them. Never the kids' names, hidden videos or what anyone watched.</div>
+          </div>
+          <button type="button" class="switch" id="share-toggle" role="switch" aria-checked="false" aria-label="Share with friends">
+            <span class="knob"></span><span id="share-state"></span>
+          </button>
+        </div>
+        <div id="friends" style="margin-top:14px"></div>
+        <div id="friend-view" hidden></div>
+        <div id="friend-invites" class="invites"></div>
+      </section>
+
+      <!-- Grown-ups -->
+      <section class="card" id="people-card">
+        <h2>👪 Grown-ups in this wigwam <span class="count" id="members-count"></span></h2>
+        <div id="members"></div>
+        <div id="member-invites" class="invites"></div>
+      </section>
+
+      <!-- Activity -->
+      <section class="card">
+        <h2>🕘 Recent changes</h2>
+        <div id="activity"></div>
+      </section>
     </div>
   </div>
 

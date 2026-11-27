@@ -44,6 +44,7 @@ export function mountPlayer(root, opts) {
       <div class="topbar">
         <button class="pbtn back" id="back" aria-label="Back">←</button>
         <div class="ptitle">${esc(title)}</div>
+        ${opts.onHeart ? `<button class="pbtn heart" id="heart" aria-pressed="${!!opts.hearted}" aria-label="Love this video">${opts.hearted ? '♥' : '♡'}</button>` : ''}
       </div>
       <div class="frame">
         <div id="yt"></div>
@@ -86,6 +87,11 @@ export function mountPlayer(root, opts) {
     else if (act === 'back') onBack();
   });
   $('back').addEventListener('click', onBack);
+  $('heart')?.addEventListener('click', (e) => {
+    const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '♥' : '♡';
+    opts.onHeart(on);
+  });
 
   function resume() {
     if (!ready) return;

@@ -1,0 +1,39 @@
+name: Deploy site
+
+# Publishes the app itself (kids' app and grown-ups' page) to GitHub Pages.
+# The video lists aren't part of it: they're private, in Supabase.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Leave out files the site doesn't need
+        run: rm -rf .github .claude android scripts supabase .gitignore start.bat
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
